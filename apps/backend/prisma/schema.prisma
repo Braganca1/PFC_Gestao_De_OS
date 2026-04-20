@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum TipoUsuario {
+  CLIENTE
+  GESTOR
+  ADMINISTRADOR
+}
+
+enum TipoOS {
+  CONSTRUCAO_CIVIL
+  ELETRICO
+  INSTALACAO_AR_CONDICIONADO
+  MANUTENCAO_AR_CONDICIONADO
+}
+
+enum StatusOS {
+  PEDIDO
+  EM_ANALISE
+  APROVADA
+  EM_EXECUCAO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum Prioridade {
+  BAIXA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+enum CanalNotificacao {
+  EMAIL
+  INTERNO
+}
+
+// ─── Entidades ────────────────────────────────────────────────────────────────
+
+model Usuario {
+  id        Int         @id @default(autoincrement())
+  nome      String
+  email     String      @unique
+  senha     String
+  tipo      TipoUsuario
+  criadoEm DateTime    @default(now()) @map("criado_em")
+
+  ordensComoSolicitante OrdemServico[] @relation("Solicitantes")
+  ordensComoExecutor    OrdemServico[] @relation("Executor")
+  historicos            HistoricoOs[]
+  notificacoes          Notificacao[]
+
+  @@map("usuarios")
+}
+
+model OrdemServico {
+  id                Int        @id @default(autoincrement())
+  numeroOs          String     @unique @map("numero_os")
+  tipo              TipoOS
+  status            StatusOS   @default(PEDIDO)
+  prioridade        Prioridade @default(MEDIA)
+  dataHora          DateTime   @default(now()) @map("data_hora")
+  emailSolicitante  String     @map("email_solicitante")
+  secaoSolicitante  String     @map("secao_solicitante")
+  nomeRepresentante String     @map("nome_representante")
+  descricao         String
+  piso              String
+  local             String
+  observacao        String?
+
+  executorId Int?    @map("executor_id")
+  executor   Usuario? @relation("Executor", fields: [executorId], references: [id])
+
+  encerradoEm       DateTime? @map("encerrado_em")
+  encerradoPor      String?   @map("encerrado_por")
+  observacoesFinais String?   @map("observacoes_finais")
+
+  solicitantes               Usuario[]                   @relation("Solicitantes")
+  osConstrucaoCivil          OsConstrucaoCivil?
+  osEletrico                 OsEletrico?
+  osInstalacaoArCondicionado OsInstalacaoArCondicionado?
+  osManutencaoArCondicionado OsManutencaoArCondicionado?
+  historicos                 HistoricoOs[]
+  anexos                     Anexo[]
+  notificacoes               Notificacao[]
+
+  @@map("ordens_servico")
+}
+
+model OsConstrucaoCivil {
+  id           Int          @id @default(autoincrement())
+  osId         Int          @unique @map("os_id")
+  ordemServico OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+
+  @@map("os_construcao_civil")
+}
+
+model OsEletrico {
+  id           Int          @id @default(autoincrement())
+  osId         Int          @unique @map("os_id")
+  ordemServico OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+
+  @@map("os_eletrico")
+}
+
+model OsInstalacaoArCondicionado {
+  id           Int          @id @default(autoincrement())
+  osId         Int          @unique @map("os_id")
+  ordemServico OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+
+  existeInfraestrutura          Boolean @map("existe_infraestrutura")
+  dadosEquipamentoSubstituido   String? @map("dados_equipamento_substituido")
+  quantidadePessoas             Int     @map("quantidade_pessoas")
+  codigoAparelho                String? @map("codigo_aparelho")
+  tipoAparelho                  String  @map("tipo_aparelho")
+  marca                         String
+  modelo                        String
+  capacidadeRefrigeracao        String  @map("capacidade_refrigeracao")
+
+  @@map("os_instalacao_ar_condicionado")
+}
+
+model OsManutencaoArCondicionado {
+  id           Int          @id @default(autoincrement())
+  osId         Int          @unique @map("os_id")
+  ordemServico OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+
+  tipoManutencao         String @map("tipo_manutencao")
+  quantidadePessoas      Int    @map("quantidade_pessoas")
+  codigoAparelho         String? @map("codigo_aparelho")
+  tipoAparelho           String  @map("tipo_aparelho")
+  marca                  String
+  modelo                 String
+  capacidadeRefrigeracao String  @map("capacidade_refrigeracao")
+
+  @@map("os_manutencao_ar_condicionado")
+}
+
+model HistoricoOs {
+  id             Int          @id @default(autoincrement())
+  osId           Int          @map("os_id")
+  ordemServico   OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+  usuarioId      Int          @map("usuario_id")
+  usuario        Usuario      @relation(fields: [usuarioId], references: [id])
+  campoAlterado  String       @map("campo_alterado")
+  valorAnterior  String?      @map("valor_anterior")
+  valorNovo      String?      @map("valor_novo")
+  dataHora       DateTime     @default(now()) @map("data_hora")
+
+  @@map("historico_os")
+}
+
+model Anexo {
+  id           Int          @id @default(autoincrement())
+  osId         Int          @map("os_id")
+  ordemServico OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+  nomeArquivo  String       @map("nome_arquivo")
+  tipoMime     String       @map("tipo_mime")
+  caminho      String
+  tamanho      Int
+  dataUpload   DateTime     @default(now()) @map("data_upload")
+
+  @@map("anexos")
+}
+
+model Notificacao {
+  id             Int              @id @default(autoincrement())
+  osId           Int              @map("os_id")
+  ordemServico   OrdemServico     @relation(fields: [osId], references: [id], onDelete: Cascade)
+  destinatarioId Int?             @map("destinatario_id")
+  destinatario   Usuario?         @relation(fields: [destinatarioId], references: [id])
+  tipo           String
+  titulo         String
+  canal          CanalNotificacao
+  lida           Boolean          @default(false)
+  dataHora       DateTime         @default(now()) @map("data_hora")
+
+  @@map("notificacoes")
+}
