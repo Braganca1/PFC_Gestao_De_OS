@@ -187,9 +187,25 @@ export default function OrdemDetalhe({ id }: { id: number }) {
         <Section title="Dados da instalação">
           <Grid>
             <Info
-              label="Existe infraestrutura"
+              label="Infraestrutura elétrica"
               value={
-                os.osInstalacaoArCondicionado.existeInfraestrutura
+                os.osInstalacaoArCondicionado.infraestruturaEletrica
+                  ? "Sim"
+                  : "Não"
+              }
+            />
+            <Info
+              label="Infraestrutura de dreno"
+              value={
+                os.osInstalacaoArCondicionado.infraestruturaDreno
+                  ? "Sim"
+                  : "Não"
+              }
+            />
+            <Info
+              label="Tubulação de gás"
+              value={
+                os.osInstalacaoArCondicionado.infraestruturaGas
                   ? "Sim"
                   : "Não"
               }

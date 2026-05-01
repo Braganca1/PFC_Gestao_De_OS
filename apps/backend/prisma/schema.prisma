@@ -116,7 +116,9 @@ model OsInstalacaoArCondicionado {
   osId         Int          @unique @map("os_id")
   ordemServico OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
 
-  existeInfraestrutura              Boolean @map("existe_infraestrutura")
+  infraestruturaEletrica            Boolean @map("infraestrutura_eletrica")
+  infraestruturaDreno               Boolean @map("infraestrutura_dreno")
+  infraestruturaGas                 Boolean @map("infraestrutura_gas")
   equipamentoSubstituidoTipo        String? @map("equipamento_substituido_tipo")
   equipamentoSubstituidoMarca       String? @map("equipamento_substituido_marca")
   equipamentoSubstituidoModelo      String? @map("equipamento_substituido_modelo")

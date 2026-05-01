@@ -2,7 +2,13 @@ import { IsBoolean, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class DadosInstalacaoArDto {
   @IsBoolean()
-  existeInfraestrutura: boolean;
+  infraestruturaEletrica: boolean;
+
+  @IsBoolean()
+  infraestruturaDreno: boolean;
+
+  @IsBoolean()
+  infraestruturaGas: boolean;
 
   @IsOptional()
   @IsString()

@@ -25,7 +25,9 @@ export interface Usuario {
 }
 
 export interface DadosInstalacaoAr {
-  existeInfraestrutura: boolean;
+  infraestruturaEletrica: boolean;
+  infraestruturaDreno: boolean;
+  infraestruturaGas: boolean;
   equipamentoSubstituidoTipo?: string | null;
   equipamentoSubstituidoMarca?: string | null;
   equipamentoSubstituidoModelo?: string | null;

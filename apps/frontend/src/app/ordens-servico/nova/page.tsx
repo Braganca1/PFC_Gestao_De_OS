@@ -15,7 +15,9 @@ interface FormState {
   local: string;
   observacao: string;
   // instalação
-  inst_existeInfra: boolean;
+  inst_infraEletrica: boolean;
+  inst_infraDreno: boolean;
+  inst_infraGas: boolean;
   inst_substTipo: string;
   inst_substMarca: string;
   inst_substModelo: string;
@@ -43,7 +45,9 @@ const ESTADO_INICIAL: FormState = {
   piso: "",
   local: "",
   observacao: "",
-  inst_existeInfra: false,
+  inst_infraEletrica: false,
+  inst_infraDreno: false,
+  inst_infraGas: false,
   inst_substTipo: "",
   inst_substMarca: "",
   inst_substModelo: "",
@@ -89,7 +93,9 @@ export default function NovaOrdemPage() {
 
     if (form.tipo === "INSTALACAO_AR_CONDICIONADO") {
       payload.dadosInstalacao = {
-        existeInfraestrutura: form.inst_existeInfra,
+        infraestruturaEletrica: form.inst_infraEletrica,
+        infraestruturaDreno: form.inst_infraDreno,
+        infraestruturaGas: form.inst_infraGas,
         equipamentoSubstituidoTipo: form.inst_substTipo || undefined,
         equipamentoSubstituidoMarca: form.inst_substMarca || undefined,
         equipamentoSubstituidoModelo: form.inst_substModelo || undefined,
@@ -221,12 +227,36 @@ export default function NovaOrdemPage() {
         {form.tipo === "INSTALACAO_AR_CONDICIONADO" && (
           <Section title="Dados — Instalação de Ar Condicionado">
             <div className="grid sm:grid-cols-2 gap-3">
-              <Field label="Existe infraestrutura?">
+              <Field label="Infraestrutura elétrica?">
                 <select
                   className={inputCls}
-                  value={form.inst_existeInfra ? "sim" : "nao"}
+                  value={form.inst_infraEletrica ? "sim" : "nao"}
                   onChange={(e) =>
-                    set("inst_existeInfra", e.target.value === "sim")
+                    set("inst_infraEletrica", e.target.value === "sim")
+                  }
+                >
+                  <option value="nao">Não</option>
+                  <option value="sim">Sim</option>
+                </select>
+              </Field>
+              <Field label="Infraestrutura de dreno?">
+                <select
+                  className={inputCls}
+                  value={form.inst_infraDreno ? "sim" : "nao"}
+                  onChange={(e) =>
+                    set("inst_infraDreno", e.target.value === "sim")
+                  }
+                >
+                  <option value="nao">Não</option>
+                  <option value="sim">Sim</option>
+                </select>
+              </Field>
+              <Field label="Tubulação de gás?">
+                <select
+                  className={inputCls}
+                  value={form.inst_infraGas ? "sim" : "nao"}
+                  onChange={(e) =>
+                    set("inst_infraGas", e.target.value === "sim")
                   }
                 >
                   <option value="nao">Não</option>
