@@ -26,7 +26,10 @@ export interface Usuario {
 
 export interface DadosInstalacaoAr {
   existeInfraestrutura: boolean;
-  dadosEquipamentoSubstituido?: string | null;
+  equipamentoSubstituidoTipo?: string | null;
+  equipamentoSubstituidoMarca?: string | null;
+  equipamentoSubstituidoModelo?: string | null;
+  equipamentoSubstituidoCapacidade?: string | null;
   quantidadePessoas: number;
   codigoAparelho?: string | null;
   tipoAparelho: string;

@@ -199,11 +199,20 @@ export default function OrdemDetalhe({ id }: { id: number }) {
               value={String(os.osInstalacaoArCondicionado.quantidadePessoas)}
             />
             <Info
-              label="Equipamento substituído"
-              value={
-                os.osInstalacaoArCondicionado.dadosEquipamentoSubstituido ?? "—"
-              }
-              full
+              label="Equipamento substituído — tipo"
+              value={os.osInstalacaoArCondicionado.equipamentoSubstituidoTipo ?? "—"}
+            />
+            <Info
+              label="Equipamento substituído — marca"
+              value={os.osInstalacaoArCondicionado.equipamentoSubstituidoMarca ?? "—"}
+            />
+            <Info
+              label="Equipamento substituído — modelo"
+              value={os.osInstalacaoArCondicionado.equipamentoSubstituidoModelo ?? "—"}
+            />
+            <Info
+              label="Equipamento substituído — capacidade (BTU/h)"
+              value={os.osInstalacaoArCondicionado.equipamentoSubstituidoCapacidade ?? "—"}
             />
             <Info
               label="Tipo de aparelho"

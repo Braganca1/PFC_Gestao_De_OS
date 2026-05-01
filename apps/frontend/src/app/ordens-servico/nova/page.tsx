@@ -16,7 +16,10 @@ interface FormState {
   observacao: string;
   // instalação
   inst_existeInfra: boolean;
-  inst_dadosEquipamentoSubstituido: string;
+  inst_substTipo: string;
+  inst_substMarca: string;
+  inst_substModelo: string;
+  inst_substCapacidade: string;
   inst_quantidadePessoas: string;
   inst_tipoAparelho: string;
   inst_marca: string;
@@ -41,7 +44,10 @@ const ESTADO_INICIAL: FormState = {
   local: "",
   observacao: "",
   inst_existeInfra: false,
-  inst_dadosEquipamentoSubstituido: "",
+  inst_substTipo: "",
+  inst_substMarca: "",
+  inst_substModelo: "",
+  inst_substCapacidade: "",
   inst_quantidadePessoas: "",
   inst_tipoAparelho: "",
   inst_marca: "",
@@ -84,8 +90,11 @@ export default function NovaOrdemPage() {
     if (form.tipo === "INSTALACAO_AR_CONDICIONADO") {
       payload.dadosInstalacao = {
         existeInfraestrutura: form.inst_existeInfra,
-        dadosEquipamentoSubstituido:
-          form.inst_dadosEquipamentoSubstituido || undefined,
+        equipamentoSubstituidoTipo: form.inst_substTipo || undefined,
+        equipamentoSubstituidoMarca: form.inst_substMarca || undefined,
+        equipamentoSubstituidoModelo: form.inst_substModelo || undefined,
+        equipamentoSubstituidoCapacidade:
+          form.inst_substCapacidade || undefined,
         quantidadePessoas: Number(form.inst_quantidadePessoas),
         tipoAparelho: form.inst_tipoAparelho,
         marca: form.inst_marca,
@@ -236,16 +245,32 @@ export default function NovaOrdemPage() {
                   }
                 />
               </Field>
-              <Field
-                label="Equipamento a ser substituído (tipo, marca, modelo, BTU/h)"
-                full
-              >
+              <Field label="Equipamento substituído — tipo">
                 <input
                   className={inputCls}
-                  value={form.inst_dadosEquipamentoSubstituido}
-                  onChange={(e) =>
-                    set("inst_dadosEquipamentoSubstituido", e.target.value)
-                  }
+                  value={form.inst_substTipo}
+                  onChange={(e) => set("inst_substTipo", e.target.value)}
+                />
+              </Field>
+              <Field label="Equipamento substituído — marca">
+                <input
+                  className={inputCls}
+                  value={form.inst_substMarca}
+                  onChange={(e) => set("inst_substMarca", e.target.value)}
+                />
+              </Field>
+              <Field label="Equipamento substituído — modelo">
+                <input
+                  className={inputCls}
+                  value={form.inst_substModelo}
+                  onChange={(e) => set("inst_substModelo", e.target.value)}
+                />
+              </Field>
+              <Field label="Equipamento substituído — capacidade (BTU/h)">
+                <input
+                  className={inputCls}
+                  value={form.inst_substCapacidade}
+                  onChange={(e) => set("inst_substCapacidade", e.target.value)}
                 />
               </Field>
               <Field label="Tipo de aparelho">

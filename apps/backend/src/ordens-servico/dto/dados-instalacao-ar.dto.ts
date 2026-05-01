@@ -6,7 +6,19 @@ export class DadosInstalacaoArDto {
 
   @IsOptional()
   @IsString()
-  dadosEquipamentoSubstituido?: string;
+  equipamentoSubstituidoTipo?: string;
+
+  @IsOptional()
+  @IsString()
+  equipamentoSubstituidoMarca?: string;
+
+  @IsOptional()
+  @IsString()
+  equipamentoSubstituidoModelo?: string;
+
+  @IsOptional()
+  @IsString()
+  equipamentoSubstituidoCapacidade?: string;
 
   @IsInt()
   @Min(1)
