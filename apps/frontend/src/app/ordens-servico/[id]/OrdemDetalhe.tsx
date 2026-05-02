@@ -402,7 +402,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
               <button
                 type="submit"
                 disabled={salvando}
-                className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="bg-[#7a8c3a] hover:bg-[#8fa042] text-[#0f1319] font-semibold px-5 py-2 rounded text-sm transition-colors disabled:opacity-50"
               >
                 Aplicar mudanças
               </button>
@@ -449,7 +449,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
               <button
                 type="submit"
                 disabled={salvando}
-                className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 disabled:opacity-50"
+                className="bg-[#7a8c3a] hover:bg-[#8fa042] text-[#0f1319] font-semibold px-5 py-2 rounded text-sm transition-colors disabled:opacity-50"
               >
                 Encerrar OS
               </button>

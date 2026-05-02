@@ -127,7 +127,7 @@ export default function NovaOrdemPage() {
   }
 
   const inputCls =
-    "border border-black/10 dark:border-white/20 rounded px-3 py-2 text-sm bg-transparent w-full";
+    "border border-[#1e2838] bg-[#0f1319] text-[#f8fafc] rounded px-3 py-2 text-sm w-full outline-none focus:border-[#7a8c3a]";
 
   return (
     <>
@@ -138,7 +138,7 @@ export default function NovaOrdemPage() {
       <main className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6 max-w-3xl">
       {erro && (
-        <div className="bg-red-100 text-red-800 px-4 py-3 rounded text-sm">
+        <div className="bg-red-500/10 text-red-300 border border-red-500/20 px-4 py-3 rounded text-sm">
           {erro}
         </div>
       )}
@@ -396,14 +396,14 @@ export default function NovaOrdemPage() {
           <button
             type="submit"
             disabled={enviando}
-            className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+            className="bg-[#7a8c3a] hover:bg-[#8fa042] text-[#0f1319] font-semibold px-5 py-2 rounded text-sm transition-colors disabled:opacity-50"
           >
             {enviando ? "Enviando…" : "Registrar OS"}
           </button>
           <button
             type="button"
             onClick={() => router.back()}
-            className="border border-black/10 dark:border-white/20 px-4 py-2 rounded text-sm"
+            className="border border-[#1e2838] text-[#bcc4d0] hover:text-white px-4 py-2 rounded text-sm transition-colors"
           >
             Cancelar
           </button>
@@ -423,8 +423,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <fieldset className="border border-black/10 dark:border-white/10 rounded-lg p-4 space-y-3">
-      <legend className="px-2 text-sm font-medium opacity-80">{title}</legend>
+    <fieldset className="border border-[#1e2838] bg-[#161c26] rounded-xl p-5 space-y-3">
+      <legend className="px-2 text-sm font-semibold text-white">{title}</legend>
       {children}
     </fieldset>
   );
@@ -441,7 +441,7 @@ function Field({
 }) {
   return (
     <label className={`block text-sm space-y-1 ${full ? "sm:col-span-2" : ""}`}>
-      <span className="opacity-80">{label}</span>
+      <span className="text-[11px] uppercase tracking-wide text-[#546278]">{label}</span>
       {children}
     </label>
   );

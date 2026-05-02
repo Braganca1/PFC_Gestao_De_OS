@@ -95,7 +95,7 @@ export function Sidebar() {
           CG
         </div>
         <div>
-          <div className="text-white text-xs font-semibold">Cap. Gomes</div>
+          <div className="text-white text-xs font-semibold">Ten Bragança</div>
           <div className="text-[#bcc4d0] text-[10px]">Administrador</div>
         </div>
       </div>
