@@ -15,6 +15,7 @@ import {
   type Usuario,
 } from "@/lib/types";
 import { PrioridadeBadge, StatusBadge } from "@/components/StatusBadge";
+import { TopBar } from "@/components/TopBar";
 
 export default function OrdemDetalhe({ id }: { id: number }) {
   const router = useRouter();
@@ -138,12 +139,25 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     }
   }
 
-  if (carregando) return <div className="text-sm opacity-70">Carregando…</div>;
+  if (carregando)
+    return (
+      <>
+        <TopBar title="Carregando…" />
+        <main className="flex-1 overflow-y-auto p-6 text-sm text-[#546278]">
+          Carregando…
+        </main>
+      </>
+    );
   if (erro && !os)
     return (
-      <div className="bg-red-100 text-red-800 px-4 py-3 rounded text-sm">
-        {erro}
-      </div>
+      <>
+        <TopBar title="Erro" />
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="bg-red-500/10 text-red-300 px-4 py-3 rounded text-sm">
+            {erro}
+          </div>
+        </main>
+      </>
     );
   if (!os) return null;
 
@@ -153,17 +167,18 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     os.status === "CONCLUIDA" || os.status === "CANCELADA";
 
   return (
-    <div className="space-y-6">
+    <>
+      <TopBar title={os.numeroOs} subtitle={TIPO_OS_LABEL[os.tipo]} />
+      <main className="flex-1 overflow-y-auto p-6">
+        <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <Link
             href="/ordens-servico"
-            className="text-xs opacity-70 hover:underline"
+            className="text-xs text-[#bcc4d0] hover:underline"
           >
             ← voltar
           </Link>
-          <h1 className="text-2xl font-bold mt-1">{os.numeroOs}</h1>
-          <p className="text-sm opacity-70">{TIPO_OS_LABEL[os.tipo]}</p>
         </div>
         <div className="flex gap-2 items-center">
           <StatusBadge status={os.status} />
@@ -476,12 +491,14 @@ export default function OrdemDetalhe({ id }: { id: number }) {
       <div>
         <button
           onClick={remover}
-          className="text-red-600 text-sm hover:underline"
+          className="text-red-400 text-sm hover:underline"
         >
           Remover esta OS
         </button>
       </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }
 

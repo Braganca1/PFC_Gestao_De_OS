@@ -5,24 +5,35 @@ import Link from "next/link";
 import { api, type FiltrosOS } from "@/lib/api";
 import {
   STATUS_LABEL,
-  TIPO_OS_LABEL,
   type OrdemServico,
   type StatusOS,
-  type TipoOS,
 } from "@/lib/types";
 import { PrioridadeBadge, StatusBadge } from "@/components/StatusBadge";
+import { TypeBadge } from "@/components/TypeBadge";
+import { TopBar } from "@/components/TopBar";
+
+const PILULAS: Array<{ valor: StatusOS | ""; label: string }> = [
+  { valor: "", label: "Todos" },
+  { valor: "PEDIDO", label: STATUS_LABEL.PEDIDO },
+  { valor: "EM_ANALISE", label: STATUS_LABEL.EM_ANALISE },
+  { valor: "APROVADA", label: STATUS_LABEL.APROVADA },
+  { valor: "EM_EXECUCAO", label: STATUS_LABEL.EM_EXECUCAO },
+  { valor: "CONCLUIDA", label: STATUS_LABEL.CONCLUIDA },
+  { valor: "CANCELADA", label: STATUS_LABEL.CANCELADA },
+];
 
 export default function OrdensServicoPage() {
   const [filtros, setFiltros] = useState<FiltrosOS>({});
+  const [busca, setBusca] = useState("");
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  async function carregar() {
+  async function carregar(f: FiltrosOS) {
     setCarregando(true);
     setErro(null);
     try {
-      const dados = await api.listarOrdens(filtros);
+      const dados = await api.listarOrdens(f);
       setOrdens(dados);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao carregar");
@@ -32,158 +43,155 @@ export default function OrdensServicoPage() {
   }
 
   useEffect(() => {
-    carregar();
+    carregar(filtros);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [filtros.status]);
 
-  function aplicarFiltros(e: React.FormEvent) {
+  function selecionarStatus(valor: StatusOS | "") {
+    setFiltros((f) => ({ ...f, status: valor || undefined }));
+  }
+
+  function aplicarBusca(e: React.FormEvent) {
     e.preventDefault();
-    carregar();
+    const novos = { ...filtros, numeroOs: busca || undefined };
+    setFiltros(novos);
+    carregar(novos);
   }
 
-  function limpar() {
-    setFiltros({});
-    setTimeout(carregar, 0);
-  }
+  const inputBusca =
+    "px-3 py-1.5 rounded-md border border-[#1e2838] bg-[#0f1319] text-[#f8fafc] text-xs outline-none placeholder:text-[#546278] w-44 focus:border-[#7a8c3a]";
+
+  const statusAtivo = filtros.status ?? "";
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Ordens de Serviço</h1>
-        <Link
-          href="/ordens-servico/nova"
-          className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
-        >
-          Nova OS
-        </Link>
-      </div>
+    <>
+      <TopBar
+        title="Ordens de Serviço"
+        subtitle="Gerenciamento de todas as OS"
+      />
+      <main className="flex-1 overflow-y-auto p-6">
+        <div className="bg-[#161c26] border border-[#1e2838] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#1e2838] flex items-center gap-3 flex-wrap">
+            <div className="font-bold text-sm text-white flex-1">
+              Ordens de Serviço Recentes
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {PILULAS.map((p) => {
+                const ativo = statusAtivo === p.valor;
+                return (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => selecionarStatus(p.valor)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
+                      ativo
+                        ? "bg-[#7a8c3a] border-[#7a8c3a] text-[#0f1319]"
+                        : "border-[#1e2838] text-[#546278] hover:text-[#bcc4d0]"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+            <form onSubmit={aplicarBusca}>
+              <input
+                className={inputBusca}
+                placeholder="Buscar OS..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                onBlur={aplicarBusca}
+              />
+            </form>
+          </div>
 
-      <form
-        onSubmit={aplicarFiltros}
-        className="grid grid-cols-1 md:grid-cols-5 gap-3 border border-black/10 dark:border-white/10 rounded-lg p-4"
-      >
-        <input
-          className="border border-black/10 dark:border-white/20 rounded px-3 py-2 text-sm bg-transparent"
-          placeholder="Número OS"
-          value={filtros.numeroOs ?? ""}
-          onChange={(e) => setFiltros({ ...filtros, numeroOs: e.target.value })}
-        />
-        <input
-          className="border border-black/10 dark:border-white/20 rounded px-3 py-2 text-sm bg-transparent"
-          placeholder="Solicitante (nome ou e-mail)"
-          value={filtros.solicitante ?? ""}
-          onChange={(e) =>
-            setFiltros({ ...filtros, solicitante: e.target.value })
-          }
-        />
-        <select
-          className="border border-black/10 dark:border-white/20 rounded px-3 py-2 text-sm bg-transparent"
-          value={filtros.status ?? ""}
-          onChange={(e) =>
-            setFiltros({ ...filtros, status: e.target.value as StatusOS | "" })
-          }
-        >
-          <option value="">Todos os status</option>
-          {Object.entries(STATUS_LABEL).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v}
-            </option>
-          ))}
-        </select>
-        <select
-          className="border border-black/10 dark:border-white/20 rounded px-3 py-2 text-sm bg-transparent"
-          value={filtros.tipo ?? ""}
-          onChange={(e) =>
-            setFiltros({ ...filtros, tipo: e.target.value as TipoOS | "" })
-          }
-        >
-          <option value="">Todos os tipos</option>
-          {Object.entries(TIPO_OS_LABEL).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v}
-            </option>
-          ))}
-        </select>
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            className="bg-black text-white dark:bg-white dark:text-black px-3 py-2 rounded text-sm flex-1"
-          >
-            Filtrar
-          </button>
-          <button
-            type="button"
-            onClick={limpar}
-            className="border border-black/10 dark:border-white/20 px-3 py-2 rounded text-sm"
-          >
-            Limpar
-          </button>
-        </div>
-      </form>
+          {erro && (
+            <div className="bg-red-500/10 text-red-300 px-5 py-3 text-sm border-b border-[#1e2838]">
+              {erro}
+            </div>
+          )}
 
-      {erro && (
-        <div className="bg-red-100 text-red-800 px-4 py-3 rounded text-sm">
-          {erro}
-        </div>
-      )}
-
-      {carregando ? (
-        <div className="text-sm opacity-70">Carregando…</div>
-      ) : ordens.length === 0 ? (
-        <div className="text-sm opacity-70">Nenhuma OS encontrada.</div>
-      ) : (
-        <div className="overflow-x-auto border border-black/10 dark:border-white/10 rounded-lg">
-          <table className="w-full text-sm">
-            <thead className="bg-black/5 dark:bg-white/5">
-              <tr>
-                <th className="text-left px-4 py-2 font-medium">Número</th>
-                <th className="text-left px-4 py-2 font-medium">Tipo</th>
-                <th className="text-left px-4 py-2 font-medium">Solicitante</th>
-                <th className="text-left px-4 py-2 font-medium">Local</th>
-                <th className="text-left px-4 py-2 font-medium">Status</th>
-                <th className="text-left px-4 py-2 font-medium">Prioridade</th>
-                <th className="text-left px-4 py-2 font-medium">Data</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ordens.map((os) => (
-                <tr
-                  key={os.id}
-                  className="border-t border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                >
-                  <td className="px-4 py-2">
-                    <Link
-                      href={`/ordens-servico/${os.id}`}
-                      className="text-blue-600 hover:underline"
+          {carregando ? (
+            <div className="px-5 py-10 text-sm text-[#546278]">Carregando…</div>
+          ) : ordens.length === 0 ? (
+            <div className="px-5 py-10 text-sm text-[#546278]">
+              Nenhuma OS encontrada.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#0f1319]">
+                    {[
+                      "Nº OS",
+                      "Tipo",
+                      "Solicitante",
+                      "Seção",
+                      "Status",
+                      "Prioridade",
+                      "Data",
+                      "Ações",
+                    ].map((c) => (
+                      <th
+                        key={c}
+                        className="text-left px-4 py-2.5 text-[11px] font-semibold tracking-wide uppercase text-[#546278] border-b border-[#1e2838] whitespace-nowrap"
+                      >
+                        {c}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ordens.map((os) => (
+                    <tr
+                      key={os.id}
+                      className="border-b border-[#1e2838] hover:bg-[#1e2838] transition-colors"
                     >
-                      {os.numeroOs}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2">{TIPO_OS_LABEL[os.tipo]}</td>
-                  <td className="px-4 py-2">
-                    <div>{os.nomeRepresentante}</div>
-                    <div className="text-xs opacity-60">
-                      {os.emailSolicitante}
-                    </div>
-                  </td>
-                  <td className="px-4 py-2">
-                    Piso {os.piso}, {os.local}
-                  </td>
-                  <td className="px-4 py-2">
-                    <StatusBadge status={os.status} />
-                  </td>
-                  <td className="px-4 py-2">
-                    <PrioridadeBadge prioridade={os.prioridade} />
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-xs opacity-70">
-                    {new Date(os.dataHora).toLocaleString("pt-BR")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/ordens-servico/${os.id}`}
+                          className="text-[#7a8c3a] font-bold hover:underline"
+                        >
+                          {os.numeroOs}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3">
+                        <TypeBadge tipo={os.tipo} />
+                      </td>
+                      <td className="px-4 py-3 text-white font-medium">
+                        <div>{os.nomeRepresentante}</div>
+                        <div className="text-[10px] text-[#546278] font-normal">
+                          {os.emailSolicitante}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-[#546278]">
+                        {os.secaoSolicitante}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={os.status} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <PrioridadeBadge prioridade={os.prioridade} />
+                      </td>
+                      <td className="px-4 py-3 text-[#546278] whitespace-nowrap">
+                        {new Date(os.dataHora).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/ordens-servico/${os.id}`}
+                          className="inline-block border border-[#1e2838] rounded px-2 py-0.5 text-[11px] text-[#bcc4d0] hover:border-[#7a8c3a] hover:text-[#c8d67a]"
+                        >
+                          Ver
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </main>
+    </>
   );
 }

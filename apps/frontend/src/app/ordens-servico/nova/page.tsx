@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { TIPO_OS_LABEL, type TipoOS } from "@/lib/types";
+import { TopBar } from "@/components/TopBar";
 
 interface FormState {
   tipo: TipoOS;
@@ -129,9 +130,13 @@ export default function NovaOrdemPage() {
     "border border-black/10 dark:border-white/20 rounded px-3 py-2 text-sm bg-transparent w-full";
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <h1 className="text-2xl font-bold">Nova Ordem de Serviço</h1>
-
+    <>
+      <TopBar
+        title="Nova Ordem de Serviço"
+        subtitle="Registrar novo pedido de serviço"
+      />
+      <main className="flex-1 overflow-y-auto p-6">
+        <div className="space-y-6 max-w-3xl">
       {erro && (
         <div className="bg-red-100 text-red-800 px-4 py-3 rounded text-sm">
           {erro}
@@ -404,7 +409,9 @@ export default function NovaOrdemPage() {
           </button>
         </div>
       </form>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }
 

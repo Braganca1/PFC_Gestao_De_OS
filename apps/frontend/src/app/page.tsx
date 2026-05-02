@@ -1,36 +1,35 @@
 import Link from "next/link";
+import { TopBar } from "@/components/TopBar";
 
 export default function Home() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Sistema de Gestão de OS</h1>
-        <p className="text-sm opacity-70 mt-2">
-          Instituto Militar de Engenharia — Projeto Final de Curso
-        </p>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Link
-          href="/ordens-servico"
-          className="border border-black/10 dark:border-white/10 rounded-lg p-6 hover:bg-black/5 dark:hover:bg-white/5"
-        >
-          <h2 className="font-semibold">Listar Ordens de Serviço</h2>
-          <p className="text-sm opacity-70 mt-1">
-            Visualizar, filtrar e acompanhar OS registradas.
-          </p>
-        </Link>
-
-        <Link
-          href="/ordens-servico/nova"
-          className="border border-black/10 dark:border-white/10 rounded-lg p-6 hover:bg-black/5 dark:hover:bg-white/5"
-        >
-          <h2 className="font-semibold">Abrir nova OS</h2>
-          <p className="text-sm opacity-70 mt-1">
-            Registrar novo pedido de serviço.
-          </p>
-        </Link>
-      </div>
-    </div>
+    <>
+      <TopBar
+        title="Sistema de Gestão de OS"
+        subtitle="Instituto Militar de Engenharia"
+      />
+      <main className="flex-1 overflow-y-auto p-6">
+        <div className="grid sm:grid-cols-2 gap-4 max-w-3xl">
+          <Link
+            href="/ordens-servico"
+            className="border border-[#1e2838] bg-[#161c26] rounded-lg p-6 hover:border-[#7a8c3a] transition-colors"
+          >
+            <h2 className="font-semibold text-white">Listar Ordens de Serviço</h2>
+            <p className="text-sm text-[#bcc4d0] mt-1">
+              Visualizar, filtrar e acompanhar OS registradas.
+            </p>
+          </Link>
+          <Link
+            href="/ordens-servico/nova"
+            className="border border-[#1e2838] bg-[#161c26] rounded-lg p-6 hover:border-[#7a8c3a] transition-colors"
+          >
+            <h2 className="font-semibold text-white">Abrir nova OS</h2>
+            <p className="text-sm text-[#bcc4d0] mt-1">
+              Registrar novo pedido de serviço.
+            </p>
+          </Link>
+        </div>
+      </main>
+    </>
   );
 }
