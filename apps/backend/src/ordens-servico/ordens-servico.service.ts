@@ -60,7 +60,6 @@ export class OrdensServicoService {
           descricao: dto.descricao,
           piso: dto.piso,
           local: dto.local,
-          observacao: dto.observacao,
         },
       });
 

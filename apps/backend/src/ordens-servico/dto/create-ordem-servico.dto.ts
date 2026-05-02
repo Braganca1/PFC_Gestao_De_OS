@@ -43,10 +43,6 @@ export class CreateOrdemServicoDto {
   @IsNotEmpty()
   local: string;
 
-  @IsOptional()
-  @IsString()
-  observacao?: string;
-
   @ValidateIf((o: CreateOrdemServicoDto) => o.tipo === TipoOS.INSTALACAO_AR_CONDICIONADO)
   @ValidateNested()
   @Type(() => DadosInstalacaoArDto)

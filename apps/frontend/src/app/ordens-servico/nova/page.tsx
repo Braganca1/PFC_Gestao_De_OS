@@ -13,7 +13,6 @@ interface FormState {
   descricao: string;
   piso: string;
   local: string;
-  observacao: string;
   // instalação
   inst_infraEletrica: boolean;
   inst_infraDreno: boolean;
@@ -44,7 +43,6 @@ const ESTADO_INICIAL: FormState = {
   descricao: "",
   piso: "",
   local: "",
-  observacao: "",
   inst_infraEletrica: false,
   inst_infraDreno: false,
   inst_infraGas: false,
@@ -89,7 +87,6 @@ export default function NovaOrdemPage() {
       piso: form.piso,
       local: form.local,
     };
-    if (form.observacao) payload.observacao = form.observacao;
 
     if (form.tipo === "INSTALACAO_AR_CONDICIONADO") {
       payload.dadosInstalacao = {
@@ -211,14 +208,6 @@ export default function NovaOrdemPage() {
                 className={inputCls}
                 value={form.descricao}
                 onChange={(e) => set("descricao", e.target.value)}
-              />
-            </Field>
-            <Field label="Observação (opcional)" full>
-              <textarea
-                rows={2}
-                className={inputCls}
-                value={form.observacao}
-                onChange={(e) => set("observacao", e.target.value)}
               />
             </Field>
           </div>
