@@ -91,6 +91,17 @@ export const STATUS_LABEL: Record<StatusOS, string> = {
   CANCELADA: "Cancelada",
 };
 
+export interface HistoricoOs {
+  id: number;
+  osId: number;
+  usuarioId: number;
+  usuario: { id: number; nome: string; email: string };
+  campoAlterado: string;
+  valorAnterior: string | null;
+  valorNovo: string | null;
+  dataHora: string;
+}
+
 export const PRIORIDADE_LABEL: Record<Prioridade, string> = {
   BAIXA: "Baixa",
   MEDIA: "Média",

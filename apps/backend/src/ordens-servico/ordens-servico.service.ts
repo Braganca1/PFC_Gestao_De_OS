@@ -24,6 +24,21 @@ const includeRelations = {
   executor: { select: { id: true, nome: true, email: true } },
 } satisfies Prisma.OrdemServicoInclude;
 
+type OrdemServicoComRelacoes = Prisma.OrdemServicoGetPayload<{
+  include: typeof includeRelations;
+}>;
+
+type CampoMonitorado =
+  | 'status'
+  | 'prioridade'
+  | 'executorId'
+  | 'observacao'
+  | 'descricao'
+  | 'piso'
+  | 'local'
+  | 'encerradoPor'
+  | 'observacoesFinais';
+
 @Injectable()
 export class OrdensServicoService {
   constructor(private readonly prisma: PrismaService) {}
@@ -109,49 +124,140 @@ export class OrdensServicoService {
   }
 
   async update(id: number, dto: UpdateOrdemServicoDto) {
-    await this.findOne(id);
+    const { usuarioId, ...patch } = dto;
+    await this.validarUsuario(usuarioId);
+    const antes = await this.findOne(id);
 
-    if (dto.executorId !== undefined) {
+    if (patch.executorId !== undefined && patch.executorId !== null) {
       const executor = await this.prisma.usuario.findUnique({
-        where: { id: dto.executorId },
+        where: { id: patch.executorId },
       });
       if (!executor) {
-        throw new BadRequestException(`Executor ${dto.executorId} não encontrado`);
+        throw new BadRequestException(`Executor ${patch.executorId} não encontrado`);
       }
     }
 
-    return this.prisma.ordemServico.update({
-      where: { id },
-      data: dto,
-      include: includeRelations,
+    return this.prisma.$transaction(async (tx) => {
+      const depois = await tx.ordemServico.update({
+        where: { id },
+        data: patch,
+        include: includeRelations,
+      });
+      await this.registrarHistorico(tx, id, usuarioId, antes, depois, [
+        'status',
+        'prioridade',
+        'executorId',
+        'observacao',
+        'descricao',
+        'piso',
+        'local',
+      ]);
+      return depois;
     });
   }
 
   async encerrar(id: number, dto: EncerrarOrdemServicoDto) {
-    const os = await this.findOne(id);
+    await this.validarUsuario(dto.usuarioId);
+    const antes = await this.findOne(id);
 
-    if (os.status === StatusOS.CONCLUIDA) {
+    if (antes.status === StatusOS.CONCLUIDA) {
       throw new BadRequestException('OS já está concluída');
     }
-    if (os.status === StatusOS.CANCELADA) {
+    if (antes.status === StatusOS.CANCELADA) {
       throw new BadRequestException('OS está cancelada e não pode ser encerrada');
     }
 
-    return this.prisma.ordemServico.update({
-      where: { id },
-      data: {
-        status: StatusOS.CONCLUIDA,
-        encerradoEm: new Date(),
-        encerradoPor: dto.encerradoPor,
-        observacoesFinais: dto.observacoesFinais,
+    return this.prisma.$transaction(async (tx) => {
+      const depois = await tx.ordemServico.update({
+        where: { id },
+        data: {
+          status: StatusOS.CONCLUIDA,
+          encerradoEm: new Date(),
+          encerradoPor: dto.encerradoPor,
+          observacoesFinais: dto.observacoesFinais,
+        },
+        include: includeRelations,
+      });
+      await this.registrarHistorico(tx, id, dto.usuarioId, antes, depois, [
+        'status',
+        'encerradoPor',
+        'observacoesFinais',
+      ]);
+      return depois;
+    });
+  }
+
+  async findHistorico(id: number) {
+    await this.findOne(id);
+    return this.prisma.historicoOs.findMany({
+      where: { osId: id },
+      include: {
+        usuario: { select: { id: true, nome: true, email: true } },
       },
-      include: includeRelations,
+      orderBy: { dataHora: 'desc' },
     });
   }
 
   async remove(id: number) {
     await this.findOne(id);
     await this.prisma.ordemServico.delete({ where: { id } });
+  }
+
+  private async validarUsuario(usuarioId: number) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
+    });
+    if (!usuario) {
+      throw new BadRequestException(`Usuário ${usuarioId} não encontrado`);
+    }
+  }
+
+  private async registrarHistorico(
+    tx: Prisma.TransactionClient,
+    osId: number,
+    usuarioId: number,
+    antes: OrdemServicoComRelacoes,
+    depois: OrdemServicoComRelacoes,
+    campos: CampoMonitorado[],
+  ) {
+    const dataHora = new Date();
+    const entradas: Prisma.HistoricoOsCreateManyInput[] = [];
+
+    for (const campo of campos) {
+      const valorAntes = (antes as Record<string, unknown>)[campo];
+      const valorDepois = (depois as Record<string, unknown>)[campo];
+      if (valorAntes === valorDepois) continue;
+
+      let campoAlterado: string = campo;
+      let valorAnterior: string | null;
+      let valorNovo: string | null;
+
+      if (campo === 'executorId') {
+        campoAlterado = 'executor';
+        valorAnterior = antes.executor
+          ? `${antes.executor.nome} (${antes.executor.email})`
+          : null;
+        valorNovo = depois.executor
+          ? `${depois.executor.nome} (${depois.executor.email})`
+          : null;
+      } else {
+        valorAnterior = valorAntes == null ? null : String(valorAntes);
+        valorNovo = valorDepois == null ? null : String(valorDepois);
+      }
+
+      entradas.push({
+        osId,
+        usuarioId,
+        campoAlterado,
+        valorAnterior,
+        valorNovo,
+        dataHora,
+      });
+    }
+
+    if (entradas.length > 0) {
+      await tx.historicoOs.createMany({ data: entradas });
+    }
   }
 
   private validarDadosEspecificos(dto: CreateOrdemServicoDto) {

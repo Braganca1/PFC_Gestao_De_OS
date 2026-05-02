@@ -41,6 +41,11 @@ export class OrdensServicoController {
     return this.ordensService.findOne(id);
   }
 
+  @Get(':id/historico')
+  findHistorico(@Param('id', ParseIntPipe) id: number) {
+    return this.ordensService.findHistorico(id);
+  }
+
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,

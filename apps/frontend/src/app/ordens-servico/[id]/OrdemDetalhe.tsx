@@ -8,6 +8,7 @@ import {
   PRIORIDADE_LABEL,
   STATUS_LABEL,
   TIPO_OS_LABEL,
+  type HistoricoOs,
   type OrdemServico,
   type Prioridade,
   type StatusOS,
@@ -19,10 +20,12 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   const router = useRouter();
   const [os, setOs] = useState<OrdemServico | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [historico, setHistorico] = useState<HistoricoOs[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
   // estado dos formulários
+  const [responsavelId, setResponsavelId] = useState<string>("");
   const [novoStatus, setNovoStatus] = useState<StatusOS | "">("");
   const [novaPrioridade, setNovaPrioridade] = useState<Prioridade | "">("");
   const [novoExecutor, setNovoExecutor] = useState<string>("");
@@ -34,12 +37,14 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   async function carregar() {
     try {
       setCarregando(true);
-      const [osData, usuariosData] = await Promise.all([
+      const [osData, usuariosData, historicoData] = await Promise.all([
         api.obterOrdem(id),
         api.listarUsuarios().catch(() => [] as Usuario[]),
+        api.listarHistorico(id).catch(() => [] as HistoricoOs[]),
       ]);
       setOs(osData);
       setUsuarios(usuariosData);
+      setHistorico(historicoData);
       setNovoStatus("");
       setNovaPrioridade("");
       setNovoExecutor("");
@@ -59,12 +64,18 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   async function aplicarMudancas(e: React.FormEvent) {
     e.preventDefault();
     if (!os) return;
-    const payload: Record<string, unknown> = {};
+    if (!responsavelId) {
+      setErro("Selecione o usuário responsável pela alteração");
+      return;
+    }
+    const payload: Record<string, unknown> = {
+      usuarioId: Number(responsavelId),
+    };
     if (novoStatus) payload.status = novoStatus;
     if (novaPrioridade) payload.prioridade = novaPrioridade;
     if (novoExecutor) payload.executorId = Number(novoExecutor);
     if (observacao) payload.observacao = observacao;
-    if (Object.keys(payload).length === 0) return;
+    if (Object.keys(payload).length === 1) return;
 
     setSalvando(true);
     setErro(null);
@@ -75,6 +86,10 @@ export default function OrdemDetalhe({ id }: { id: number }) {
       setNovaPrioridade("");
       setNovoExecutor("");
       setObservacao("");
+      const novoHist = await api
+        .listarHistorico(os.id)
+        .catch(() => [] as HistoricoOs[]);
+      setHistorico(novoHist);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao atualizar");
     } finally {
@@ -86,16 +101,25 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     e.preventDefault();
     if (!os) return;
     if (!encerrarPor) return;
+    if (!responsavelId) {
+      setErro("Selecione o usuário responsável pela alteração");
+      return;
+    }
     setSalvando(true);
     setErro(null);
     try {
       const atualizada = await api.encerrarOrdem(os.id, {
+        usuarioId: Number(responsavelId),
         encerradoPor: encerrarPor,
         observacoesFinais: obsFinais || undefined,
       });
       setOs(atualizada);
       setEncerrarPor("");
       setObsFinais("");
+      const novoHist = await api
+        .listarHistorico(os.id)
+        .catch(() => [] as HistoricoOs[]);
+      setHistorico(novoHist);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao encerrar");
     } finally {
@@ -292,6 +316,21 @@ export default function OrdemDetalhe({ id }: { id: number }) {
             onSubmit={aplicarMudancas}
             className="grid sm:grid-cols-2 gap-3"
           >
+            <Field label="Realizado por" full>
+              <select
+                required
+                className={inputCls}
+                value={responsavelId}
+                onChange={(e) => setResponsavelId(e.target.value)}
+              >
+                <option value="">— selecionar usuário —</option>
+                {usuarios.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.nome} ({u.email})
+                  </option>
+                ))}
+              </select>
+            </Field>
             <Field label="Novo status">
               <select
                 className={inputCls}
@@ -360,6 +399,21 @@ export default function OrdemDetalhe({ id }: { id: number }) {
       {!concluida && (
         <Section title="Encerrar OS">
           <form onSubmit={encerrar} className="grid sm:grid-cols-2 gap-3">
+            <Field label="Realizado por" full>
+              <select
+                required
+                className={inputCls}
+                value={responsavelId}
+                onChange={(e) => setResponsavelId(e.target.value)}
+              >
+                <option value="">— selecionar usuário —</option>
+                {usuarios.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.nome} ({u.email})
+                  </option>
+                ))}
+              </select>
+            </Field>
             <Field label="Encerrada por">
               <input
                 required
@@ -389,6 +443,36 @@ export default function OrdemDetalhe({ id }: { id: number }) {
         </Section>
       )}
 
+      <Section title="Histórico de alterações">
+        {historico.length === 0 ? (
+          <p className="text-sm opacity-60">Nenhuma alteração registrada.</p>
+        ) : (
+          <ul className="space-y-2">
+            {historico.map((h) => (
+              <li
+                key={h.id}
+                className="text-sm border-l-2 border-black/10 dark:border-white/10 pl-3"
+              >
+                <div className="text-xs opacity-60">
+                  {new Date(h.dataHora).toLocaleString("pt-BR")} —{" "}
+                  {h.usuario.nome}
+                </div>
+                <div>
+                  <span className="font-medium">{rotuloCampo(h.campoAlterado)}:</span>{" "}
+                  <span className="opacity-70">
+                    {formatarValor(h.campoAlterado, h.valorAnterior)}
+                  </span>{" "}
+                  →{" "}
+                  <span>
+                    {formatarValor(h.campoAlterado, h.valorNovo)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
       <div>
         <button
           onClick={remover}
@@ -399,6 +483,30 @@ export default function OrdemDetalhe({ id }: { id: number }) {
       </div>
     </div>
   );
+}
+
+const ROTULO_CAMPO: Record<string, string> = {
+  status: "Status",
+  prioridade: "Prioridade",
+  executor: "Executor",
+  observacao: "Observação",
+  descricao: "Descrição",
+  piso: "Piso",
+  local: "Local",
+  encerradoPor: "Encerrado por",
+  observacoesFinais: "Observações finais",
+};
+
+function rotuloCampo(campo: string): string {
+  return ROTULO_CAMPO[campo] ?? campo;
+}
+
+function formatarValor(campo: string, valor: string | null): string {
+  if (valor == null) return "—";
+  if (campo === "status") return STATUS_LABEL[valor as StatusOS] ?? valor;
+  if (campo === "prioridade")
+    return PRIORIDADE_LABEL[valor as Prioridade] ?? valor;
+  return valor;
 }
 
 function Section({

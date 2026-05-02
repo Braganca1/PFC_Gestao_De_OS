@@ -1,4 +1,10 @@
-import type { OrdemServico, StatusOS, TipoOS, Usuario } from "./types";
+import type {
+  HistoricoOs,
+  OrdemServico,
+  StatusOS,
+  TipoOS,
+  Usuario,
+} from "./types";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:3001/api";
@@ -65,6 +71,10 @@ export const api = {
     return request<OrdemServico>(`/ordens-servico/${id}`);
   },
 
+  listarHistorico(id: number): Promise<HistoricoOs[]> {
+    return request<HistoricoOs[]>(`/ordens-servico/${id}/historico`);
+  },
+
   criarOrdem(payload: unknown): Promise<OrdemServico> {
     return request<OrdemServico>(`/ordens-servico`, {
       method: "POST",
@@ -81,7 +91,11 @@ export const api = {
 
   encerrarOrdem(
     id: number,
-    payload: { encerradoPor: string; observacoesFinais?: string },
+    payload: {
+      usuarioId: number;
+      encerradoPor: string;
+      observacoesFinais?: string;
+    },
   ): Promise<OrdemServico> {
     return request<OrdemServico>(`/ordens-servico/${id}/encerrar`, {
       method: "PATCH",

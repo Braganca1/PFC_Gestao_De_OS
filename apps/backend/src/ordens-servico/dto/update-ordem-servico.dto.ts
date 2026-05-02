@@ -7,6 +7,9 @@ import {
 import { Prioridade, StatusOS } from '@prisma/client';
 
 export class UpdateOrdemServicoDto {
+  @IsInt()
+  usuarioId: number;
+
   @IsOptional()
   @IsEnum(StatusOS)
   status?: StatusOS;
