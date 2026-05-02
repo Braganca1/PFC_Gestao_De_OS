@@ -8,6 +8,7 @@ interface NavItem {
   icon: string;
   href?: string;
   matchPrefix?: string;
+  excludePaths?: string[];
   disabled?: boolean;
 }
 
@@ -18,6 +19,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: "≡",
     href: "/ordens-servico",
     matchPrefix: "/ordens-servico",
+    excludePaths: ["/ordens-servico/nova"],
   },
   { label: "Nova OS", icon: "+", href: "/ordens-servico/nova" },
   { label: "Relatórios", icon: "↧", disabled: true },
@@ -43,8 +45,12 @@ export function Sidebar() {
 
       <nav className="flex-1 py-3 flex flex-col gap-0.5">
         {NAV_ITEMS.map((item) => {
+          const excluded = item.excludePaths?.some(
+            (p) => pathname === p || pathname.startsWith(p + "/")
+          );
           const isActive =
             !!item.href &&
+            !excluded &&
             (item.matchPrefix
               ? pathname === item.matchPrefix ||
                 pathname.startsWith(item.matchPrefix + "/")
