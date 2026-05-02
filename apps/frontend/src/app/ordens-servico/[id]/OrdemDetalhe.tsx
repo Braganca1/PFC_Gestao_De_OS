@@ -162,7 +162,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   if (!os) return null;
 
   const inputCls =
-    "border border-black/10 dark:border-white/20 rounded px-3 py-2 text-sm bg-transparent w-full";
+    "border border-[#1e2838] bg-[#0f1319] text-[#f8fafc] rounded px-3 py-2 text-sm w-full outline-none focus:border-[#7a8c3a]";
   const concluida =
     os.status === "CONCLUIDA" || os.status === "CANCELADA";
 
@@ -187,7 +187,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
       </div>
 
       {erro && (
-        <div className="bg-red-100 text-red-800 px-4 py-3 rounded text-sm">
+        <div className="bg-red-500/10 text-red-300 border border-red-500/20 px-4 py-3 rounded text-sm">
           {erro}
         </div>
       )}
@@ -460,25 +460,25 @@ export default function OrdemDetalhe({ id }: { id: number }) {
 
       <Section title="Histórico de alterações">
         {historico.length === 0 ? (
-          <p className="text-sm opacity-60">Nenhuma alteração registrada.</p>
+          <p className="text-sm text-[#546278]">Nenhuma alteração registrada.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {historico.map((h) => (
               <li
                 key={h.id}
-                className="text-sm border-l-2 border-black/10 dark:border-white/10 pl-3"
+                className="text-sm border-l-2 border-[#7a8c3a]/40 pl-3"
               >
-                <div className="text-xs opacity-60">
+                <div className="text-[11px] text-[#546278]">
                   {new Date(h.dataHora).toLocaleString("pt-BR")} —{" "}
-                  {h.usuario.nome}
+                  <span className="text-[#bcc4d0]">{h.usuario.nome}</span>
                 </div>
-                <div>
-                  <span className="font-medium">{rotuloCampo(h.campoAlterado)}:</span>{" "}
-                  <span className="opacity-70">
+                <div className="text-[#f8fafc]">
+                  <span className="font-semibold">{rotuloCampo(h.campoAlterado)}:</span>{" "}
+                  <span className="text-[#546278] line-through">
                     {formatarValor(h.campoAlterado, h.valorAnterior)}
                   </span>{" "}
-                  →{" "}
-                  <span>
+                  <span className="text-[#546278]">→</span>{" "}
+                  <span className="text-[#c8d67a]">
                     {formatarValor(h.campoAlterado, h.valorNovo)}
                   </span>
                 </div>
@@ -534,8 +534,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border border-black/10 dark:border-white/10 rounded-lg p-4 space-y-3">
-      <h2 className="text-sm font-medium opacity-80">{title}</h2>
+    <section className="border border-[#1e2838] bg-[#161c26] rounded-xl p-5 space-y-3">
+      <h2 className="text-sm font-semibold text-white">{title}</h2>
       {children}
     </section>
   );
@@ -556,8 +556,8 @@ function Info({
 }) {
   return (
     <div className={`text-sm ${full ? "sm:col-span-2" : ""}`}>
-      <div className="opacity-60 text-xs">{label}</div>
-      <div className="mt-0.5">{value}</div>
+      <div className="text-[11px] uppercase tracking-wide text-[#546278]">{label}</div>
+      <div className="mt-1 text-[#f8fafc]">{value}</div>
     </div>
   );
 }
@@ -573,7 +573,7 @@ function Field({
 }) {
   return (
     <label className={`block text-sm space-y-1 ${full ? "sm:col-span-2" : ""}`}>
-      <span className="opacity-80">{label}</span>
+      <span className="text-[11px] uppercase tracking-wide text-[#546278]">{label}</span>
       {children}
     </label>
   );
