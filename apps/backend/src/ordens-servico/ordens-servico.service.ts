@@ -4,7 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, StatusOS, TipoOS } from '@prisma/client';
+import { existsSync, rmSync } from 'fs';
+import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
+import { UPLOADS_ROOT } from '../anexos/multer.config';
 import { CreateOrdemServicoDto } from './dto/create-ordem-servico.dto';
 import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
 import { EncerrarOrdemServicoDto } from './dto/encerrar-ordem-servico.dto';
@@ -22,6 +25,7 @@ const includeRelations = {
   osInstalacaoArCondicionado: true,
   osManutencaoArCondicionado: true,
   executor: { select: { id: true, nome: true, email: true } },
+  anexos: { orderBy: { dataUpload: 'desc' } },
 } satisfies Prisma.OrdemServicoInclude;
 
 type OrdemServicoComRelacoes = Prisma.OrdemServicoGetPayload<{
@@ -200,6 +204,13 @@ export class OrdensServicoService {
   async remove(id: number) {
     await this.findOne(id);
     await this.prisma.ordemServico.delete({ where: { id } });
+    const dir = join(UPLOADS_ROOT, String(id));
+    if (existsSync(dir)) {
+      try {
+        rmSync(dir, { recursive: true, force: true });
+      } catch {
+      }
+    }
   }
 
   private async validarUsuario(usuarioId: number) {
