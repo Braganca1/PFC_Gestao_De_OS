@@ -1,4 +1,5 @@
 import type {
+  Anexo,
   HistoricoOs,
   OrdemServico,
   StatusOS,
@@ -109,6 +110,39 @@ export const api = {
 
   listarUsuarios(): Promise<Usuario[]> {
     return request<Usuario[]>(`/usuarios`);
+  },
+
+  async uploadAnexo(osId: number, file: File): Promise<Anexo> {
+    const fd = new FormData();
+    fd.append("arquivo", file);
+    const res = await fetch(`${API_BASE}/ordens-servico/${osId}/anexos`, {
+      method: "POST",
+      body: fd,
+    });
+    if (!res.ok) {
+      let body: unknown = null;
+      try {
+        body = await res.json();
+      } catch {
+        // ignore
+      }
+      const msg =
+        (body && typeof body === "object" && "message" in body
+          ? Array.isArray((body as { message: unknown }).message)
+            ? ((body as { message: string[] }).message).join(", ")
+            : String((body as { message: unknown }).message)
+          : null) ?? `Erro ${res.status}`;
+      throw new ApiError(res.status, body, msg);
+    }
+    return res.json() as Promise<Anexo>;
+  },
+
+  removerAnexo(id: number): Promise<void> {
+    return request<void>(`/anexos/${id}`, { method: "DELETE" });
+  },
+
+  urlAnexo(id: number): string {
+    return `${API_BASE}/anexos/${id}/download`;
   },
 };
 

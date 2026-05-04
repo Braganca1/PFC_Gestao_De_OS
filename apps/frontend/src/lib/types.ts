@@ -73,6 +73,17 @@ export interface OrdemServico {
   osEletrico: { id: number } | null;
   osInstalacaoArCondicionado: ({ id: number } & DadosInstalacaoAr) | null;
   osManutencaoArCondicionado: ({ id: number } & DadosManutencaoAr) | null;
+  anexos?: Anexo[];
+}
+
+export interface Anexo {
+  id: number;
+  osId: number;
+  nomeArquivo: string;
+  tipoMime: string;
+  caminho: string;
+  tamanho: number;
+  dataUpload: string;
 }
 
 export const TIPO_OS_LABEL: Record<TipoOS, string> = {

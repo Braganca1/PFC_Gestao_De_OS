@@ -16,6 +16,7 @@ import {
 } from "@/lib/types";
 import { PrioridadeBadge, StatusBadge } from "@/components/StatusBadge";
 import { TopBar } from "@/components/TopBar";
+import { AnexosSection } from "@/components/AnexosSection";
 
 export default function OrdemDetalhe({ id }: { id: number }) {
   const router = useRouter();
@@ -221,6 +222,12 @@ export default function OrdemDetalhe({ id }: { id: number }) {
           )}
         </Grid>
       </Section>
+
+      <AnexosSection
+        osId={os.id}
+        anexos={os.anexos ?? []}
+        onChange={carregar}
+      />
 
       {os.osInstalacaoArCondicionado && (
         <Section title="Dados da instalação">
