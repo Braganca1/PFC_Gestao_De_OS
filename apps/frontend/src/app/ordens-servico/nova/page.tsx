@@ -127,7 +127,7 @@ export default function NovaOrdemPage() {
   }
 
   const inputCls =
-    "border border-[#1e2838] bg-[#0f1319] text-[#f8fafc] rounded px-3 py-2 text-sm w-full outline-none focus:border-[#7a8c3a]";
+    "border border-[#1e2838] bg-[#0f1319] text-[#f8fafc] rounded px-3 py-2 text-sm w-full outline-none focus:border-[#7a8c3a] placeholder:text-[#546278]";
 
   return (
     <>
@@ -160,26 +160,29 @@ export default function NovaOrdemPage() {
 
         <Section title="Dados do solicitante">
           <div className="grid sm:grid-cols-2 gap-3">
-            <Field label="E-mail">
+            <Field label="E-mail" required>
               <input
                 type="email"
                 required
+                placeholder="solicitante@ime.eb.br"
                 className={inputCls}
                 value={form.emailSolicitante}
                 onChange={(e) => set("emailSolicitante", e.target.value)}
               />
             </Field>
-            <Field label="Seção">
+            <Field label="Seção" required>
               <input
                 required
+                placeholder="Ex: Seção de Informática"
                 className={inputCls}
                 value={form.secaoSolicitante}
                 onChange={(e) => set("secaoSolicitante", e.target.value)}
               />
             </Field>
-            <Field label="Nome do representante" full>
+            <Field label="Nome do representante" full required>
               <input
                 required
+                placeholder="Ex: Cap. João Silva"
                 className={inputCls}
                 value={form.nomeRepresentante}
                 onChange={(e) => set("nomeRepresentante", e.target.value)}
@@ -190,26 +193,29 @@ export default function NovaOrdemPage() {
 
         <Section title="Local e descrição">
           <div className="grid sm:grid-cols-2 gap-3">
-            <Field label="Piso">
+            <Field label="Piso" required>
               <input
                 required
+                placeholder="Ex: 2º piso"
                 className={inputCls}
                 value={form.piso}
                 onChange={(e) => set("piso", e.target.value)}
               />
             </Field>
-            <Field label="Local">
+            <Field label="Local" required>
               <input
                 required
+                placeholder="Ex: Sala 105, Laboratório B"
                 className={inputCls}
                 value={form.local}
                 onChange={(e) => set("local", e.target.value)}
               />
             </Field>
-            <Field label="Descrição do problema" full>
+            <Field label="Descrição do problema" full required>
               <textarea
                 required
                 rows={3}
+                placeholder="Descreva o problema ou serviço solicitado com o máximo de detalhes possível."
                 className={inputCls}
                 value={form.descricao}
                 onChange={(e) => set("descricao", e.target.value)}
@@ -257,11 +263,12 @@ export default function NovaOrdemPage() {
                   <option value="sim">Sim</option>
                 </select>
               </Field>
-              <Field label="Quantidade de pessoas na sala">
+              <Field label="Quantidade de pessoas na sala" required>
                 <input
                   type="number"
                   min={1}
                   required
+                  placeholder="Ex: 10"
                   className={inputCls}
                   value={form.inst_quantidadePessoas}
                   onChange={(e) =>
@@ -271,6 +278,7 @@ export default function NovaOrdemPage() {
               </Field>
               <Field label="Equipamento substituído — tipo">
                 <input
+                  placeholder="Ex: Split"
                   className={inputCls}
                   value={form.inst_substTipo}
                   onChange={(e) => set("inst_substTipo", e.target.value)}
@@ -278,6 +286,7 @@ export default function NovaOrdemPage() {
               </Field>
               <Field label="Equipamento substituído — marca">
                 <input
+                  placeholder="Ex: Agratto"
                   className={inputCls}
                   value={form.inst_substMarca}
                   onChange={(e) => set("inst_substMarca", e.target.value)}
@@ -285,6 +294,7 @@ export default function NovaOrdemPage() {
               </Field>
               <Field label="Equipamento substituído — modelo">
                 <input
+                  placeholder="Ex: TS-Q122"
                   className={inputCls}
                   value={form.inst_substModelo}
                   onChange={(e) => set("inst_substModelo", e.target.value)}
@@ -292,38 +302,43 @@ export default function NovaOrdemPage() {
               </Field>
               <Field label="Equipamento substituído — capacidade (BTU/h)">
                 <input
+                  placeholder="Ex: 12000"
                   className={inputCls}
                   value={form.inst_substCapacidade}
                   onChange={(e) => set("inst_substCapacidade", e.target.value)}
                 />
               </Field>
-              <Field label="Tipo de aparelho">
+              <Field label="Tipo de aparelho" required>
                 <input
                   required
+                  placeholder="Ex: Janela"
                   className={inputCls}
                   value={form.inst_tipoAparelho}
                   onChange={(e) => set("inst_tipoAparelho", e.target.value)}
                 />
               </Field>
-              <Field label="Marca">
+              <Field label="Marca" required>
                 <input
                   required
+                  placeholder="Ex: LG"
                   className={inputCls}
                   value={form.inst_marca}
                   onChange={(e) => set("inst_marca", e.target.value)}
                 />
               </Field>
-              <Field label="Modelo">
+              <Field label="Modelo" required>
                 <input
                   required
+                  placeholder="Ex: FTXS35KAVMA"
                   className={inputCls}
                   value={form.inst_modelo}
                   onChange={(e) => set("inst_modelo", e.target.value)}
                 />
               </Field>
-              <Field label="Capacidade (BTU/h)">
+              <Field label="Capacidade (BTU/h)" required>
                 <input
                   required
+                  placeholder="Ex: 12000"
                   className={inputCls}
                   value={form.inst_capacidade}
                   onChange={(e) => set("inst_capacidade", e.target.value)}
@@ -336,19 +351,21 @@ export default function NovaOrdemPage() {
         {form.tipo === "MANUTENCAO_AR_CONDICIONADO" && (
           <Section title="Dados — Manutenção de Ar Condicionado">
             <div className="grid sm:grid-cols-2 gap-3">
-              <Field label="Tipo de manutenção">
+              <Field label="Tipo de manutenção" required>
                 <input
                   required
+                  placeholder="Ex: Preventiva, Corretiva"
                   className={inputCls}
                   value={form.manut_tipoManutencao}
                   onChange={(e) => set("manut_tipoManutencao", e.target.value)}
                 />
               </Field>
-              <Field label="Quantidade de pessoas na sala">
+              <Field label="Quantidade de pessoas na sala" required>
                 <input
                   type="number"
                   min={1}
                   required
+                  placeholder="Ex: 8"
                   className={inputCls}
                   value={form.manut_quantidadePessoas}
                   onChange={(e) =>
@@ -356,33 +373,37 @@ export default function NovaOrdemPage() {
                   }
                 />
               </Field>
-              <Field label="Tipo de aparelho">
+              <Field label="Tipo de aparelho" required>
                 <input
                   required
+                  placeholder="Ex: Split Hi-Wall"
                   className={inputCls}
                   value={form.manut_tipoAparelho}
                   onChange={(e) => set("manut_tipoAparelho", e.target.value)}
                 />
               </Field>
-              <Field label="Marca">
+              <Field label="Marca" required>
                 <input
                   required
+                  placeholder="Ex: Carrier"
                   className={inputCls}
                   value={form.manut_marca}
                   onChange={(e) => set("manut_marca", e.target.value)}
                 />
               </Field>
-              <Field label="Modelo">
+              <Field label="Modelo" required>
                 <input
                   required
+                  placeholder="Ex: 42XQB012515LC"
                   className={inputCls}
                   value={form.manut_modelo}
                   onChange={(e) => set("manut_modelo", e.target.value)}
                 />
               </Field>
-              <Field label="Capacidade (BTU/h)">
+              <Field label="Capacidade (BTU/h)" required>
                 <input
                   required
+                  placeholder="Ex: 18000"
                   className={inputCls}
                   value={form.manut_capacidade}
                   onChange={(e) => set("manut_capacidade", e.target.value)}
@@ -434,14 +455,19 @@ function Field({
   label,
   children,
   full,
+  required,
 }: {
   label: string;
   children: React.ReactNode;
   full?: boolean;
+  required?: boolean;
 }) {
   return (
     <label className={`block text-sm space-y-1 ${full ? "sm:col-span-2" : ""}`}>
-      <span className="text-[11px] uppercase tracking-wide text-[#546278]">{label}</span>
+      <span className="text-[11px] uppercase tracking-wide text-[#546278]">
+        {label}
+        {required && <span className="text-red-400 ml-0.5">*</span>}
+      </span>
       {children}
     </label>
   );
