@@ -6,13 +6,6 @@ interface TopBarProps {
 export function TopBar({ title, subtitle }: TopBarProps) {
   return (
     <header className="h-14 bg-[#161c26] border-b border-[#1e2838] flex items-center px-6 gap-4 shrink-0">
-      <button
-        type="button"
-        className="text-[#7a8fa8] text-lg leading-none p-1"
-        aria-label="Alternar menu"
-      >
-        ☰
-      </button>
       <div className="flex-1">
         <div className="text-white font-bold text-[15px]">{title}</div>
         {subtitle && (

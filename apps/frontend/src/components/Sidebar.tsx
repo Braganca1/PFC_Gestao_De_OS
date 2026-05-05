@@ -36,7 +36,7 @@ export function Sidebar() {
 
   return (
     <aside className="w-55 shrink-0 h-screen bg-[#161c26] border-r border-[#1e2838] flex flex-col">
-      <div className="px-4 py-5 border-b border-[#1e2838] flex items-center gap-2.5">
+      <Link href="/dashboard" className="px-4 py-5 border-b border-[#1e2838] flex items-center gap-2.5 hover:bg-white/5 transition-colors">
         <div className="w-8.5 h-8.5 rounded-md bg-[#7a8c3a] flex items-center justify-center font-black text-[#0f1319] text-sm shrink-0">
           IME
         </div>
@@ -46,7 +46,7 @@ export function Sidebar() {
           </div>
           <div className="text-[#bcc4d0] text-[10px]">Instituto Militar</div>
         </div>
-      </div>
+      </Link>
 
       <nav className="flex-1 py-3 flex flex-col gap-0.5">
         {NAV_ITEMS.map((item) => {
