@@ -102,7 +102,7 @@ export default function DashboardPage() {
               />
               <KPICard
                 label="Tempo médio"
-                valor={dados.tempoMedioDias > 0 ? `${dados.tempoMedioDias} d` : "—"}
+                valor={dados.tempoMedioDias > 0 ? `${dados.tempoMedioDias} dias` : "—"}
                 sublabel="Da abertura ao encerramento"
                 icone="⏱"
               />
