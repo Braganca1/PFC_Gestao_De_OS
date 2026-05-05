@@ -26,7 +26,7 @@ const NAV_ITEMS: NavItem[] = [
     matchPrefix: "/ordens-servico",
     excludePaths: ["/ordens-servico/nova"],
   },
-  { label: "Nova OS", icon: "+", href: "/ordens-servico/nova" },
+  { label: "Solicitação de Serviço", icon: "+", href: "/ordens-servico/nova" },
   { label: "Relatórios", icon: "↧", disabled: true },
   { label: "Usuários", icon: "⊙", disabled: true },
 ];
