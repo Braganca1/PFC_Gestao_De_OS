@@ -6,7 +6,7 @@ Projeto Final de Curso (PFC) — sistema web para registro, acompanhamento e ger
 
 - **Backend:** NestJS 11 + Prisma 6 + PostgreSQL 16
 - **Frontend:** Next.js 16 (App Router) + Tailwind v4
-- **Banco:** Postgres em Docker (porta `5433` — a `5432` está reservada para Postgres nativo do Windows)
+- **Banco:** Postgres em Docker
 - **Monorepo:** npm workspaces
 
 ## Estrutura
@@ -14,12 +14,11 @@ Projeto Final de Curso (PFC) — sistema web para registro, acompanhamento e ger
 ```
 PFC_Gestao_De_OS/
 ├── apps/
-│   ├── backend/       NestJS + Prisma
-│   └── frontend/      Next.js
-├── docker-compose.yml Postgres
-├── package.json       Workspaces + scripts
-├── .env.example       Variáveis de ambiente
-└── postman_collection.json
+│   ├── backend/           NestJS + Prisma
+│   └── frontend/          Next.js
+├── docker-compose.yml     Banco Postgres
+├── package.json           Workspaces + scripts raiz
+└── .env.example           Variáveis de ambiente de exemplo
 ```
 
 ## Pré-requisitos
@@ -33,10 +32,10 @@ PFC_Gestao_De_OS/
 # 1. Subir o banco
 docker compose up -d
 
-# 2. Instalar dependências (raiz instala os workspaces)
+# 2. Instalar dependências (raiz instala todos os workspaces)
 npm install
 
-# 3. Configurar ambiente (copiar e editar se necessário)
+# 3. Configurar variáveis de ambiente
 cp .env.example apps/backend/.env
 
 # 4. Aplicar migrations
@@ -46,12 +45,23 @@ npx prisma migrate deploy
 
 ## Rodando
 
-Em terminais separados:
+Em terminais separados a partir da raiz do projeto:
 
 ```bash
-# Backend — http://localhost:3001/api
-npm run dev:backend
-
-# Frontend — http://localhost:3000
-npm run dev:frontend
+npm run dev:backend   # porta 3001
+npm run dev:frontend  # porta 3000
 ```
+
+## URLs
+
+| Serviço        | URL                           |
+|----------------|-------------------------------|
+| Frontend       | http://localhost:3000         |
+| Swagger        | http://localhost:3001/swagger |
+
+## Funcionalidades
+
+- Abertura e acompanhamento de Ordens de Serviço
+- Histórico de alterações por OS
+- Upload e download de anexos (imagens e PDF, até 10 MB)
+- Dashboard com KPIs e estatísticas agregadas
