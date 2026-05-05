@@ -102,6 +102,17 @@ export const STATUS_LABEL: Record<StatusOS, string> = {
   CANCELADA: "Cancelada",
 };
 
+export interface EstatisticasOS {
+  totalOs: number;
+  osAbertas: number;
+  osConcluidas: number;
+  tempoMedioDias: number;
+  porStatus: Record<StatusOS, number>;
+  porTipo: Record<TipoOS, number>;
+  porPrioridade: Record<Prioridade, number>;
+  ultimasOs: OrdemServico[];
+}
+
 export interface HistoricoOs {
   id: number;
   osId: number;

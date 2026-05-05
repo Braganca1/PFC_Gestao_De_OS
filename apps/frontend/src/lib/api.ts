@@ -1,5 +1,6 @@
 import type {
   Anexo,
+  EstatisticasOS,
   HistoricoOs,
   OrdemServico,
   StatusOS,
@@ -110,6 +111,10 @@ export const api = {
 
   listarUsuarios(): Promise<Usuario[]> {
     return request<Usuario[]>(`/usuarios`);
+  },
+
+  obterEstatisticas(): Promise<EstatisticasOS> {
+    return request<EstatisticasOS>(`/estatisticas`);
   },
 
   async uploadAnexo(osId: number, file: File): Promise<Anexo> {

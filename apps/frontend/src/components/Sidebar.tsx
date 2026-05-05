@@ -13,7 +13,12 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", icon: "▦", disabled: true },
+  {
+    label: "Dashboard",
+    icon: "▦",
+    href: "/dashboard",
+    matchPrefix: "/dashboard",
+  },
   {
     label: "Ordens de Serviço",
     icon: "≡",
