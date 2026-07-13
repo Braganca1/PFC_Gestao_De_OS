@@ -74,7 +74,7 @@ export class AuthService {
     if (!usuario) {
       usuario = await this.prisma.usuario.create({
         data: {
-          nome: payload.name ?? payload.email,
+          nome: this.nomeProprio(payload.name ?? payload.email),
           email: payload.email,
           senha: null,
           tipo: TipoUsuario.CLIENTE,
@@ -82,6 +82,19 @@ export class AuthService {
       });
     }
     return this.emitirToken(usuario);
+  }
+
+  private nomeProprio(nome: string): string {
+    const particulas = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+    return nome
+      .toLocaleLowerCase('pt-BR')
+      .split(/\s+/)
+      .map((parte, i) =>
+        i > 0 && particulas.has(parte)
+          ? parte
+          : parte.charAt(0).toLocaleUpperCase('pt-BR') + parte.slice(1),
+      )
+      .join(' ');
   }
 
   async me(id: number): Promise<Omit<Usuario, 'senha'>> {
