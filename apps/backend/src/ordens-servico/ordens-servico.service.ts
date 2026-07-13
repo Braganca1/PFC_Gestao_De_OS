@@ -8,6 +8,10 @@ import { existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsuarioAutenticado } from '../auth/current-user.decorator';
+import {
+  NotificacoesService,
+  TIPO_NOTIFICACAO,
+} from '../notificacoes/notificacoes.service';
 import { UPLOADS_ROOT } from '../anexos/multer.config';
 import { CreateOrdemServicoDto } from './dto/create-ordem-servico.dto';
 import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
@@ -45,6 +49,15 @@ type OrdemServicoComRelacoes = Prisma.OrdemServicoGetPayload<{
   include: typeof includeRelations;
 }>;
 
+const STATUS_LABEL: Record<StatusOS, string> = {
+  PEDIDO: 'Pedido',
+  EM_ANALISE: 'Em análise',
+  APROVADA: 'Aprovada',
+  EM_EXECUCAO: 'Em execução',
+  CONCLUIDA: 'Concluída',
+  CANCELADA: 'Cancelada',
+};
+
 type CampoMonitorado =
   | 'status'
   | 'prioridade'
@@ -58,7 +71,25 @@ type CampoMonitorado =
 
 @Injectable()
 export class OrdensServicoService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService,
+  ) {}
+
+  /** IDs de todos os gestores/administradores, exceto o autor da ação. */
+  private async idsGestores(
+    tx: Prisma.TransactionClient,
+    exceto: number,
+  ): Promise<number[]> {
+    const gestores = await tx.usuario.findMany({
+      where: {
+        tipo: { in: [TipoUsuario.GESTOR, TipoUsuario.ADMINISTRADOR] },
+        id: { not: exceto },
+      },
+      select: { id: true },
+    });
+    return gestores.map((g) => g.id);
+  }
 
   async create(dto: CreateOrdemServicoDto, user: UsuarioAutenticado) {
     this.validarDadosEspecificos(dto);
@@ -102,6 +133,16 @@ export class OrdensServicoService {
           });
           break;
       }
+
+      await this.notificacoes.criarVarias(
+        tx,
+        await this.idsGestores(tx, user.sub),
+        {
+          osId: os.id,
+          tipo: TIPO_NOTIFICACAO.NOVA_OS,
+          titulo: `Nova OS ${numeroOs} aberta por ${user.nome}`,
+        },
+      );
 
       return tx.ordemServico.findUniqueOrThrow({
         where: { id: os.id },
@@ -179,6 +220,32 @@ export class OrdensServicoService {
         'piso',
         'local',
       ]);
+
+      if (
+        depois.executorId !== antes.executorId &&
+        depois.executorId != null &&
+        depois.executorId !== usuarioId
+      ) {
+        await this.notificacoes.criar(tx, {
+          osId: id,
+          destinatarioId: depois.executorId,
+          tipo: TIPO_NOTIFICACAO.OS_ATRIBUIDA,
+          titulo: `Você foi designado executor da OS ${depois.numeroOs}`,
+        });
+      }
+      if (
+        depois.status !== antes.status &&
+        antes.solicitanteId != null &&
+        antes.solicitanteId !== usuarioId
+      ) {
+        await this.notificacoes.criar(tx, {
+          osId: id,
+          destinatarioId: antes.solicitanteId,
+          tipo: TIPO_NOTIFICACAO.MUDANCA_STATUS,
+          titulo: `OS ${depois.numeroOs}: ${STATUS_LABEL[antes.status]} → ${STATUS_LABEL[depois.status]}`,
+        });
+      }
+
       return depois;
     });
   }
@@ -214,6 +281,16 @@ export class OrdensServicoService {
         'encerradoPor',
         'observacoesFinais',
       ]);
+
+      if (antes.solicitanteId != null && antes.solicitanteId !== usuarioId) {
+        await this.notificacoes.criar(tx, {
+          osId: id,
+          destinatarioId: antes.solicitanteId,
+          tipo: TIPO_NOTIFICACAO.OS_CONCLUIDA,
+          titulo: `OS ${depois.numeroOs} concluída`,
+        });
+      }
+
       return depois;
     });
   }
@@ -245,6 +322,17 @@ export class OrdensServicoService {
       await this.registrarHistorico(tx, id, user.sub, antes, depois, [
         'status',
       ]);
+
+      await this.notificacoes.criarVarias(
+        tx,
+        await this.idsGestores(tx, user.sub),
+        {
+          osId: id,
+          tipo: TIPO_NOTIFICACAO.OS_CANCELADA,
+          titulo: `Solicitação ${depois.numeroOs} cancelada por ${user.nome}`,
+        },
+      );
+
       return depois;
     });
   }

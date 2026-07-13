@@ -6,6 +6,7 @@ import { UsuariosModule } from './usuarios/usuarios.module';
 import { OrdensServicoModule } from './ordens-servico/ordens-servico.module';
 import { AnexosModule } from './anexos/anexos.module';
 import { EstatisticasModule } from './estatisticas/estatisticas.module';
+import { NotificacoesModule } from './notificacoes/notificacoes.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { EstatisticasModule } from './estatisticas/estatisticas.module';
     OrdensServicoModule,
     AnexosModule,
     EstatisticasModule,
+    NotificacoesModule,
   ],
 })
 export class AppModule {}
