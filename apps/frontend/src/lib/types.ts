@@ -115,6 +115,16 @@ export interface EstatisticasOS {
   ultimasOs: OrdemServico[];
 }
 
+export interface Notificacao {
+  id: number;
+  osId: number;
+  tipo: string;
+  titulo: string;
+  lida: boolean;
+  dataHora: string;
+  ordemServico: { id: number; numeroOs: string };
+}
+
 export interface HistoricoOs {
   id: number;
   osId: number;

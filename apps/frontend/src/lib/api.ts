@@ -3,6 +3,7 @@ import type {
   Anexo,
   EstatisticasOS,
   HistoricoOs,
+  Notificacao,
   OrdemServico,
   StatusOS,
   TipoOS,
@@ -189,6 +190,24 @@ export const api = {
 
   obterEstatisticas(): Promise<EstatisticasOS> {
     return request<EstatisticasOS>(`/estatisticas`);
+  },
+
+  listarNotificacoes(): Promise<Notificacao[]> {
+    return request<Notificacao[]>(`/notificacoes`);
+  },
+
+  contarNotificacoesNaoLidas(): Promise<{ total: number }> {
+    return request<{ total: number }>(`/notificacoes/nao-lidas`);
+  },
+
+  marcarNotificacaoLida(id: number): Promise<Notificacao> {
+    return request<Notificacao>(`/notificacoes/${id}/lida`, {
+      method: "PATCH",
+    });
+  },
+
+  marcarTodasNotificacoesLidas(): Promise<void> {
+    return request<void>(`/notificacoes/lidas`, { method: "PATCH" });
   },
 
   async uploadAnexo(osId: number, file: File): Promise<Anexo> {
