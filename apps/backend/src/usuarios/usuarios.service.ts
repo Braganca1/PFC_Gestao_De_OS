@@ -70,7 +70,7 @@ export class UsuariosService {
     await this.prisma.usuario.delete({ where: { id } });
   }
 
-  private semSenha<T extends { senha: string }>(u: T): Omit<T, 'senha'> {
+  private semSenha<T extends { senha: string | null }>(u: T): Omit<T, 'senha'> {
     const { senha: _senha, ...resto } = u;
     return resto;
   }
