@@ -27,31 +27,53 @@ export class OrdensServicoController {
   constructor(private readonly ordensService: OrdensServicoService) {}
 
   @Post()
-  create(@Body() dto: CreateOrdemServicoDto) {
-    return this.ordensService.create(dto);
+  create(
+    @Body() dto: CreateOrdemServicoDto,
+    @CurrentUser() user: UsuarioAutenticado,
+  ) {
+    return this.ordensService.create(dto, user);
   }
 
   @Get()
   findAll(
+    @CurrentUser() user: UsuarioAutenticado,
     @Query('numeroOs') numeroOs?: string,
     @Query('solicitante') solicitante?: string,
     @Query('status') status?: StatusOS,
     @Query('tipo') tipo?: TipoOS,
   ) {
-    return this.ordensService.findAll({ numeroOs, solicitante, status, tipo });
+    return this.ordensService.findAll(
+      { numeroOs, solicitante, status, tipo },
+      user,
+    );
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.ordensService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: UsuarioAutenticado,
+  ) {
+    return this.ordensService.findOne(id, user);
   }
 
   @Get(':id/historico')
-  findHistorico(@Param('id', ParseIntPipe) id: number) {
-    return this.ordensService.findHistorico(id);
+  findHistorico(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: UsuarioAutenticado,
+  ) {
+    return this.ordensService.findHistorico(id, user);
+  }
+
+  @Patch(':id/cancelar')
+  cancelar(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: UsuarioAutenticado,
+  ) {
+    return this.ordensService.cancelar(id, user);
   }
 
   @Patch(':id')
+  @Roles(TipoUsuario.GESTOR, TipoUsuario.ADMINISTRADOR)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateOrdemServicoDto,
@@ -61,6 +83,7 @@ export class OrdensServicoController {
   }
 
   @Patch(':id/encerrar')
+  @Roles(TipoUsuario.GESTOR, TipoUsuario.ADMINISTRADOR)
   encerrar(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: EncerrarOrdemServicoDto,

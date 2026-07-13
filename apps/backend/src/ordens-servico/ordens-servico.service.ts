@@ -3,10 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, StatusOS, TipoOS } from '@prisma/client';
+import { Prisma, StatusOS, TipoOS, TipoUsuario } from '@prisma/client';
 import { existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
+import { UsuarioAutenticado } from '../auth/current-user.decorator';
 import { UPLOADS_ROOT } from '../anexos/multer.config';
 import { CreateOrdemServicoDto } from './dto/create-ordem-servico.dto';
 import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
@@ -25,8 +26,20 @@ const includeRelations = {
   osInstalacaoArCondicionado: true,
   osManutencaoArCondicionado: true,
   executor: { select: { id: true, nome: true, email: true } },
+  solicitante: { select: { id: true, nome: true, email: true } },
   anexos: { orderBy: { dataUpload: 'desc' } },
 } satisfies Prisma.OrdemServicoInclude;
+
+/** Verifica se a OS pertence ao usuário (vínculo direto ou e-mail de solicitante legado). */
+export function osPertenceAoUsuario(
+  os: { solicitanteId: number | null; emailSolicitante: string },
+  user: UsuarioAutenticado,
+): boolean {
+  return (
+    os.solicitanteId === user.sub ||
+    os.emailSolicitante.toLowerCase() === user.email.toLowerCase()
+  );
+}
 
 type OrdemServicoComRelacoes = Prisma.OrdemServicoGetPayload<{
   include: typeof includeRelations;
@@ -47,10 +60,13 @@ type CampoMonitorado =
 export class OrdensServicoService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateOrdemServicoDto) {
+  async create(dto: CreateOrdemServicoDto, user: UsuarioAutenticado) {
     this.validarDadosEspecificos(dto);
 
     const numeroOs = await this.gerarNumeroOs();
+    // cliente sempre abre OS em nome próprio; gestor/admin podem abrir para terceiros
+    const emailSolicitante =
+      user.tipo === TipoUsuario.CLIENTE ? user.email : dto.emailSolicitante;
 
     return this.prisma.$transaction(async (tx) => {
       const os = await tx.ordemServico.create({
@@ -58,7 +74,8 @@ export class OrdensServicoService {
           numeroOs,
           tipo: dto.tipo,
           prioridade: dto.prioridade,
-          emailSolicitante: dto.emailSolicitante,
+          solicitanteId: user.sub,
+          emailSolicitante,
           secaoSolicitante: dto.secaoSolicitante,
           nomeRepresentante: dto.nomeRepresentante,
           descricao: dto.descricao,
@@ -93,8 +110,10 @@ export class OrdensServicoService {
     });
   }
 
-  async findAll(filtros: FindAllFiltros) {
-    const where: Prisma.OrdemServicoWhereInput = {};
+  async findAll(filtros: FindAllFiltros, user: UsuarioAutenticado) {
+    const where: Prisma.OrdemServicoWhereInput = {
+      AND: [this.whereVisivelPara(user)],
+    };
 
     if (filtros.numeroOs) {
       where.numeroOs = { contains: filtros.numeroOs, mode: 'insensitive' };
@@ -115,12 +134,17 @@ export class OrdensServicoService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, user?: UsuarioAutenticado) {
     const os = await this.prisma.ordemServico.findUnique({
       where: { id },
       include: includeRelations,
     });
-    if (!os) {
+    if (
+      !os ||
+      (user &&
+        user.tipo === TipoUsuario.CLIENTE &&
+        !osPertenceAoUsuario(os, user))
+    ) {
       throw new NotFoundException(`Ordem de serviço ${id} não encontrada`);
     }
     return os;
@@ -194,8 +218,39 @@ export class OrdensServicoService {
     });
   }
 
-  async findHistorico(id: number) {
-    await this.findOne(id);
+  async cancelar(id: number, user: UsuarioAutenticado) {
+    const antes = await this.findOne(id, user);
+
+    if (
+      user.tipo === TipoUsuario.CLIENTE &&
+      antes.status !== StatusOS.PEDIDO
+    ) {
+      throw new BadRequestException(
+        'A solicitação só pode ser cancelada enquanto estiver com status Pedido',
+      );
+    }
+    if (
+      antes.status === StatusOS.CANCELADA ||
+      antes.status === StatusOS.CONCLUIDA
+    ) {
+      throw new BadRequestException('OS já está encerrada');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const depois = await tx.ordemServico.update({
+        where: { id },
+        data: { status: StatusOS.CANCELADA },
+        include: includeRelations,
+      });
+      await this.registrarHistorico(tx, id, user.sub, antes, depois, [
+        'status',
+      ]);
+      return depois;
+    });
+  }
+
+  async findHistorico(id: number, user?: UsuarioAutenticado) {
+    await this.findOne(id, user);
     return this.prisma.historicoOs.findMany({
       where: { osId: id },
       include: {
@@ -215,6 +270,18 @@ export class OrdensServicoService {
       } catch {
       }
     }
+  }
+
+  private whereVisivelPara(
+    user: UsuarioAutenticado,
+  ): Prisma.OrdemServicoWhereInput {
+    if (user.tipo !== TipoUsuario.CLIENTE) return {};
+    return {
+      OR: [
+        { solicitanteId: user.sub },
+        { emailSolicitante: { equals: user.email, mode: 'insensitive' } },
+      ],
+    };
   }
 
   private async validarUsuario(usuarioId: number) {

@@ -55,6 +55,7 @@ model Usuario {
 
   ordensComoSolicitante OrdemServico[] @relation("Solicitantes")
   ordensComoExecutor    OrdemServico[] @relation("Executor")
+  ordensCriadas         OrdemServico[] @relation("SolicitanteVinculado")
   historicos            HistoricoOs[]
   notificacoes          Notificacao[]
 
@@ -78,6 +79,9 @@ model OrdemServico {
 
   executorId Int?    @map("executor_id")
   executor   Usuario? @relation("Executor", fields: [executorId], references: [id])
+
+  solicitanteId Int?     @map("solicitante_id")
+  solicitante   Usuario? @relation("SolicitanteVinculado", fields: [solicitanteId], references: [id])
 
   encerradoEm       DateTime? @map("encerrado_em")
   encerradoPor      String?   @map("encerrado_por")
