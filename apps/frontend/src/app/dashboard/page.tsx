@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { getUsuario } from "@/lib/auth";
 import {
   PRIORIDADE_LABEL,
   STATUS_LABEL,
@@ -60,17 +62,22 @@ const TIPO_ORDEM: TipoOS[] = [
 const PRIORIDADE_ORDEM: Prioridade[] = ["BAIXA", "MEDIA", "ALTA", "URGENTE"];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [dados, setDados] = useState<EstatisticasOS | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
+    if (getUsuario()?.tipo === "CLIENTE") {
+      router.replace("/ordens-servico");
+      return;
+    }
     api
       .obterEstatisticas()
       .then(setDados)
       .catch((e) => setErro(e instanceof Error ? e.message : "Erro ao carregar"))
       .finally(() => setCarregando(false));
-  }, []);
+  }, [router]);
 
   return (
     <>

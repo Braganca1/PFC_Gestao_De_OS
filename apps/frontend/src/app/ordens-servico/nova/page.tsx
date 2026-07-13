@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { getUsuario, nomeProprio } from "@/lib/auth";
 import { TIPO_OS_LABEL, type TipoOS } from "@/lib/types";
 import { TopBar } from "@/components/TopBar";
 
@@ -69,6 +70,18 @@ export default function NovaOrdemPage() {
   const [form, setForm] = useState<FormState>(ESTADO_INICIAL);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [ehCliente, setEhCliente] = useState(false);
+
+  useEffect(() => {
+    const usuario = getUsuario();
+    if (!usuario) return;
+    setEhCliente(usuario.tipo === "CLIENTE");
+    setForm((f) => ({
+      ...f,
+      emailSolicitante: f.emailSolicitante || usuario.email,
+      nomeRepresentante: f.nomeRepresentante || nomeProprio(usuario.nome),
+    }));
+  }, []);
 
   function set<K extends keyof FormState>(campo: K, valor: FormState[K]) {
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -165,9 +178,15 @@ export default function NovaOrdemPage() {
                 type="email"
                 required
                 placeholder="solicitante@ime.eb.br"
-                className={inputCls}
+                className={`${inputCls} ${ehCliente ? "opacity-60 cursor-not-allowed" : ""}`}
                 value={form.emailSolicitante}
                 onChange={(e) => set("emailSolicitante", e.target.value)}
+                readOnly={ehCliente}
+                title={
+                  ehCliente
+                    ? "A OS será aberta com o e-mail da sua conta"
+                    : undefined
+                }
               />
             </Field>
             <Field label="Seção" required>

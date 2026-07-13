@@ -66,6 +66,8 @@ export interface OrdemServico {
   observacao: string | null;
   executorId: number | null;
   executor: { id: number; nome: string; email: string } | null;
+  solicitanteId: number | null;
+  solicitante: { id: number; nome: string; email: string } | null;
   encerradoEm: string | null;
   encerradoPor: string | null;
   observacoesFinais: string | null;

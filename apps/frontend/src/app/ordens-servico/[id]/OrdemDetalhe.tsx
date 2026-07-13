@@ -40,9 +40,12 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   async function carregar() {
     try {
       setCarregando(true);
+      const ehCliente = getUsuario()?.tipo === "CLIENTE";
       const [osData, usuariosData, historicoData] = await Promise.all([
         api.obterOrdem(id),
-        api.listarUsuarios().catch(() => [] as Usuario[]),
+        ehCliente
+          ? Promise.resolve([] as Usuario[])
+          : api.listarUsuarios().catch(() => [] as Usuario[]),
         api.listarHistorico(id).catch(() => [] as HistoricoOs[]),
       ]);
       setOs(osData);
@@ -136,6 +139,25 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     }
   }
 
+  async function cancelarSolicitacao() {
+    if (!os) return;
+    if (!confirm(`Cancelar a solicitação ${os.numeroOs}?`)) return;
+    setSalvando(true);
+    setErro(null);
+    try {
+      const atualizada = await api.cancelarOrdem(os.id);
+      setOs(atualizada);
+      const novoHist = await api
+        .listarHistorico(os.id)
+        .catch(() => [] as HistoricoOs[]);
+      setHistorico(novoHist);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao cancelar");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   if (carregando)
     return (
       <>
@@ -162,6 +184,17 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     "border border-[#1e2838] bg-[#0f1319] text-[#f8fafc] rounded px-3 py-2 text-sm w-full outline-none focus:border-[#7a8c3a]";
   const concluida =
     os.status === "CONCLUIDA" || os.status === "CANCELADA";
+  const podeGerenciar =
+    !!usuarioLogado && usuarioLogado.tipo !== "CLIENTE";
+  const ehDono =
+    !!usuarioLogado &&
+    (os.solicitanteId === usuarioLogado.id ||
+      os.emailSolicitante.toLowerCase() === usuarioLogado.email.toLowerCase());
+  const podeCancelarSolicitacao =
+    !!usuarioLogado &&
+    usuarioLogado.tipo === "CLIENTE" &&
+    ehDono &&
+    os.status === "PEDIDO";
 
   return (
     <>
@@ -328,7 +361,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
         </Section>
       )}
 
-      {!concluida && (
+      {!concluida && podeGerenciar && (
         <Section title="Atualizar OS">
           <form
             onSubmit={aplicarMudancas}
@@ -399,7 +432,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
         </Section>
       )}
 
-      {!concluida && (
+      {!concluida && podeGerenciar && (
         <Section title="Encerrar OS">
           <form onSubmit={encerrar} className="grid sm:grid-cols-2 gap-3">
             <Field label="Encerrada por">
@@ -461,7 +494,19 @@ export default function OrdemDetalhe({ id }: { id: number }) {
         )}
       </Section>
 
-      {usuarioLogado && usuarioLogado.tipo !== "CLIENTE" && (
+      {podeCancelarSolicitacao && (
+        <div>
+          <button
+            onClick={cancelarSolicitacao}
+            disabled={salvando}
+            className="text-red-400 text-sm hover:underline disabled:opacity-50"
+          >
+            Cancelar solicitação
+          </button>
+        </div>
+      )}
+
+      {podeGerenciar && (
         <div>
           <button
             onClick={remover}

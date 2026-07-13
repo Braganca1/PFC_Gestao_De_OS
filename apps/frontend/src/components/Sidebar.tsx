@@ -13,6 +13,8 @@ interface NavItem {
   matchPrefix?: string;
   excludePaths?: string[];
   disabled?: boolean;
+  /** papéis que veem o item; omitido = todos */
+  papeis?: Usuario["tipo"][];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -21,6 +23,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: "▦",
     href: "/dashboard",
     matchPrefix: "/dashboard",
+    papeis: ["GESTOR", "ADMINISTRADOR"],
   },
   {
     label: "Ordens de Serviço",
@@ -30,8 +33,19 @@ const NAV_ITEMS: NavItem[] = [
     excludePaths: ["/ordens-servico/nova"],
   },
   { label: "Solicitação de Serviço", icon: "+", href: "/ordens-servico/nova" },
-  { label: "Relatórios", icon: "↧", disabled: true },
-  { label: "Usuários", icon: "⊙", disabled: true },
+  {
+    label: "Relatórios",
+    icon: "↧",
+    disabled: true,
+    papeis: ["GESTOR", "ADMINISTRADOR"],
+  },
+  {
+    label: "Usuários",
+    icon: "⊙",
+    href: "/usuarios",
+    matchPrefix: "/usuarios",
+    papeis: ["ADMINISTRADOR"],
+  },
 ];
 
 function iniciais(nome: string): string {
@@ -70,7 +84,10 @@ export function Sidebar() {
       </Link>
 
       <nav className="flex-1 py-3 flex flex-col gap-0.5">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter(
+          (item) =>
+            !item.papeis || (usuario && item.papeis.includes(usuario.tipo)),
+        ).map((item) => {
           const excluded = item.excludePaths?.some(
             (p) => pathname === p || pathname.startsWith(p + "/")
           );

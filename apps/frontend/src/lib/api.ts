@@ -6,6 +6,7 @@ import type {
   OrdemServico,
   StatusOS,
   TipoOS,
+  TipoUsuario,
   Usuario,
 } from "./types";
 
@@ -146,12 +147,44 @@ export const api = {
     });
   },
 
+  cancelarOrdem(id: number): Promise<OrdemServico> {
+    return request<OrdemServico>(`/ordens-servico/${id}/cancelar`, {
+      method: "PATCH",
+    });
+  },
+
   removerOrdem(id: number): Promise<void> {
     return request<void>(`/ordens-servico/${id}`, { method: "DELETE" });
   },
 
   listarUsuarios(): Promise<Usuario[]> {
     return request<Usuario[]>(`/usuarios`);
+  },
+
+  criarUsuario(payload: {
+    nome: string;
+    email: string;
+    senha: string;
+    tipo: TipoUsuario;
+  }): Promise<Usuario> {
+    return request<Usuario>(`/usuarios`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  atualizarUsuario(
+    id: number,
+    payload: Partial<{ nome: string; email: string; senha: string; tipo: TipoUsuario }>,
+  ): Promise<Usuario> {
+    return request<Usuario>(`/usuarios/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  removerUsuario(id: number): Promise<void> {
+    return request<void>(`/usuarios/${id}`, { method: "DELETE" });
   },
 
   obterEstatisticas(): Promise<EstatisticasOS> {
