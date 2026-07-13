@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { getUsuario, limparSessao } from "@/lib/auth";
+import { TIPO_USUARIO_LABEL, type Usuario } from "@/lib/types";
 
 interface NavItem {
   label: string;
@@ -31,8 +34,26 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Usuários", icon: "⊙", disabled: true },
 ];
 
+function iniciais(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  const primeira = partes[0]?.[0] ?? "";
+  const ultima = partes.length > 1 ? partes[partes.length - 1][0] : "";
+  return (primeira + ultima).toUpperCase() || "?";
+}
+
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+
+  useEffect(() => {
+    setUsuario(getUsuario());
+  }, []);
+
+  function sair() {
+    limparSessao();
+    router.replace("/login");
+  }
 
   return (
     <aside className="w-55 shrink-0 h-screen bg-[#161c26] border-r border-[#1e2838] flex flex-col">
@@ -97,12 +118,24 @@ export function Sidebar() {
 
       <div className="px-4 py-3.5 border-t border-[#1e2838] flex items-center gap-2.5">
         <div className="w-7.5 h-7.5 rounded-full bg-[#253348] flex items-center justify-center text-[#bcc4d0] text-xs font-bold shrink-0">
-          CG
+          {usuario ? iniciais(usuario.nome) : "…"}
         </div>
-        <div>
-          <div className="text-white text-xs font-semibold">Ten Bragança</div>
-          <div className="text-[#bcc4d0] text-[10px]">Administrador</div>
+        <div className="flex-1 min-w-0">
+          <div className="text-white text-xs font-semibold truncate">
+            {usuario?.nome ?? "—"}
+          </div>
+          <div className="text-[#bcc4d0] text-[10px]">
+            {usuario ? TIPO_USUARIO_LABEL[usuario.tipo] : ""}
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={sair}
+          title="Sair"
+          className="text-[#7a8fa8] hover:text-red-400 text-xs shrink-0 transition-colors"
+        >
+          Sair
+        </button>
       </div>
     </aside>
   );
