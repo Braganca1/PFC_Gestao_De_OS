@@ -126,8 +126,8 @@ export class OrdensServicoService {
     return os;
   }
 
-  async update(id: number, dto: UpdateOrdemServicoDto) {
-    const { usuarioId, ...patch } = dto;
+  async update(id: number, dto: UpdateOrdemServicoDto, usuarioId: number) {
+    const patch = dto;
     await this.validarUsuario(usuarioId);
     const antes = await this.findOne(id);
 
@@ -159,8 +159,12 @@ export class OrdensServicoService {
     });
   }
 
-  async encerrar(id: number, dto: EncerrarOrdemServicoDto) {
-    await this.validarUsuario(dto.usuarioId);
+  async encerrar(
+    id: number,
+    dto: EncerrarOrdemServicoDto,
+    usuarioId: number,
+  ) {
+    await this.validarUsuario(usuarioId);
     const antes = await this.findOne(id);
 
     if (antes.status === StatusOS.CONCLUIDA) {
@@ -181,7 +185,7 @@ export class OrdensServicoService {
         },
         include: includeRelations,
       });
-      await this.registrarHistorico(tx, id, dto.usuarioId, antes, depois, [
+      await this.registrarHistorico(tx, id, usuarioId, antes, depois, [
         'status',
         'encerradoPor',
         'observacoesFinais',

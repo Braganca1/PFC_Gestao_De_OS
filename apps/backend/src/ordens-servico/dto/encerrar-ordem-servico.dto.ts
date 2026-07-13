@@ -1,9 +1,6 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class EncerrarOrdemServicoDto {
-  @IsInt()
-  usuarioId: number;
-
   @IsString()
   @IsNotEmpty()
   encerradoPor: string;

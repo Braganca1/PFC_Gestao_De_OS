@@ -11,7 +11,12 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { StatusOS, TipoOS } from '@prisma/client';
+import { StatusOS, TipoOS, TipoUsuario } from '@prisma/client';
+import {
+  CurrentUser,
+  UsuarioAutenticado,
+} from '../auth/current-user.decorator';
+import { Roles } from '../auth/roles.decorator';
 import { OrdensServicoService } from './ordens-servico.service';
 import { CreateOrdemServicoDto } from './dto/create-ordem-servico.dto';
 import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
@@ -50,19 +55,22 @@ export class OrdensServicoController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateOrdemServicoDto,
+    @CurrentUser() user: UsuarioAutenticado,
   ) {
-    return this.ordensService.update(id, dto);
+    return this.ordensService.update(id, dto, user.sub);
   }
 
   @Patch(':id/encerrar')
   encerrar(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: EncerrarOrdemServicoDto,
+    @CurrentUser() user: UsuarioAutenticado,
   ) {
-    return this.ordensService.encerrar(id, dto);
+    return this.ordensService.encerrar(id, dto, user.sub);
   }
 
   @Delete(':id')
+  @Roles(TipoUsuario.GESTOR, TipoUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.ordensService.remove(id);
