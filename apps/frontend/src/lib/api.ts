@@ -1,3 +1,4 @@
+import { getToken, limparSessao } from "./auth";
 import type {
   Anexo,
   EstatisticasOS,
@@ -10,6 +11,27 @@ import type {
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:3001/api";
+
+export interface LoginResult {
+  accessToken: string;
+  usuario: Usuario;
+}
+
+function authHeaders(): Record<string, string> {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function tratarNaoAutorizado(status: number) {
+  if (
+    status === 401 &&
+    typeof window !== "undefined" &&
+    window.location.pathname !== "/login"
+  ) {
+    limparSessao();
+    window.location.href = "/login";
+  }
+}
 
 class ApiError extends Error {
   status: number;
@@ -26,12 +48,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders(),
       ...(init?.headers ?? {}),
     },
     cache: "no-store",
   });
 
   if (!res.ok) {
+    tratarNaoAutorizado(res.status);
     let body: unknown = null;
     try {
       body = await res.json();
@@ -59,6 +83,24 @@ export interface FiltrosOS {
 }
 
 export const api = {
+  login(email: string, senha: string): Promise<LoginResult> {
+    return request<LoginResult>(`/auth/login`, {
+      method: "POST",
+      body: JSON.stringify({ email, senha }),
+    });
+  },
+
+  loginGoogle(idToken: string): Promise<LoginResult> {
+    return request<LoginResult>(`/auth/google`, {
+      method: "POST",
+      body: JSON.stringify({ idToken }),
+    });
+  },
+
+  me(): Promise<Usuario> {
+    return request<Usuario>(`/auth/me`);
+  },
+
   listarOrdens(filtros: FiltrosOS = {}): Promise<OrdemServico[]> {
     const qs = new URLSearchParams();
     if (filtros.numeroOs) qs.set("numeroOs", filtros.numeroOs);
@@ -94,7 +136,6 @@ export const api = {
   encerrarOrdem(
     id: number,
     payload: {
-      usuarioId: number;
       encerradoPor: string;
       observacoesFinais?: string;
     },
@@ -122,9 +163,11 @@ export const api = {
     fd.append("arquivo", file);
     const res = await fetch(`${API_BASE}/ordens-servico/${osId}/anexos`, {
       method: "POST",
+      headers: authHeaders(),
       body: fd,
     });
     if (!res.ok) {
+      tratarNaoAutorizado(res.status);
       let body: unknown = null;
       try {
         body = await res.json();
@@ -147,7 +190,9 @@ export const api = {
   },
 
   urlAnexo(id: number): string {
-    return `${API_BASE}/anexos/${id}/download`;
+    const token = getToken();
+    const qs = token ? `?token=${encodeURIComponent(token)}` : "";
+    return `${API_BASE}/anexos/${id}/download${qs}`;
   },
 };
 
