@@ -27,11 +27,13 @@ export class UsuariosController {
   }
 
   @Get()
+  @Roles(TipoUsuario.GESTOR, TipoUsuario.ADMINISTRADOR)
   findAll() {
     return this.usuariosService.findAll();
   }
 
   @Get(':id')
+  @Roles(TipoUsuario.GESTOR, TipoUsuario.ADMINISTRADOR)
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.usuariosService.findOne(id);
   }

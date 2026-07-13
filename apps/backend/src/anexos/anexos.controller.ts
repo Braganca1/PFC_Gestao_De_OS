@@ -13,6 +13,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
+import {
+  CurrentUser,
+  UsuarioAutenticado,
+} from '../auth/current-user.decorator';
 import { AnexosService } from './anexos.service';
 import { multerConfig } from './multer.config';
 
@@ -24,17 +28,19 @@ export class AnexosController {
   @UseInterceptors(FileInterceptor('arquivo', multerConfig))
   upload(
     @Param('osId', ParseIntPipe) osId: number,
+    @CurrentUser() user: UsuarioAutenticado,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.anexosService.upload(osId, file);
+    return this.anexosService.upload(osId, user, file);
   }
 
   @Get('anexos/:id/download')
   async download(
     @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: UsuarioAutenticado,
     @Res() res: Response,
   ) {
-    const anexo = await this.anexosService.findOne(id);
+    const anexo = await this.anexosService.findOne(id, user);
     const caminho = this.anexosService.caminhoAbsoluto(anexo);
     res.setHeader('Content-Type', anexo.tipoMime);
     res.setHeader(
@@ -46,7 +52,10 @@ export class AnexosController {
 
   @Delete('anexos/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.anexosService.remove(id);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: UsuarioAutenticado,
+  ) {
+    return this.anexosService.remove(id, user);
   }
 }
