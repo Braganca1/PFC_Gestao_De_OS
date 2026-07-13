@@ -124,6 +124,12 @@ export interface HistoricoOs {
   dataHora: string;
 }
 
+export const TIPO_USUARIO_LABEL: Record<TipoUsuario, string> = {
+  CLIENTE: "Cliente",
+  GESTOR: "Gestor",
+  ADMINISTRADOR: "Administrador",
+};
+
 export const PRIORIDADE_LABEL: Record<Prioridade, string> = {
   BAIXA: "Baixa",
   MEDIA: "Média",

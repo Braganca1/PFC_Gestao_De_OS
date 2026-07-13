@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { getUsuario } from "@/lib/auth";
 import {
   PRIORIDADE_LABEL,
   STATUS_LABEL,
@@ -27,7 +28,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   const [erro, setErro] = useState<string | null>(null);
 
   // estado dos formulários
-  const [responsavelId, setResponsavelId] = useState<string>("");
+  const [usuarioLogado, setUsuarioLogado] = useState<Usuario | null>(null);
   const [novoStatus, setNovoStatus] = useState<StatusOS | "">("");
   const [novaPrioridade, setNovaPrioridade] = useState<Prioridade | "">("");
   const [novoExecutor, setNovoExecutor] = useState<string>("");
@@ -63,21 +64,21 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    const u = getUsuario();
+    setUsuarioLogado(u);
+    if (u) setEncerrarPor(u.nome);
+  }, []);
+
   async function aplicarMudancas(e: React.FormEvent) {
     e.preventDefault();
     if (!os) return;
-    if (!responsavelId) {
-      setErro("Selecione o usuário responsável pela alteração");
-      return;
-    }
-    const payload: Record<string, unknown> = {
-      usuarioId: Number(responsavelId),
-    };
+    const payload: Record<string, unknown> = {};
     if (novoStatus) payload.status = novoStatus;
     if (novaPrioridade) payload.prioridade = novaPrioridade;
     if (novoExecutor) payload.executorId = Number(novoExecutor);
     if (observacao) payload.observacao = observacao;
-    if (Object.keys(payload).length === 1) return;
+    if (Object.keys(payload).length === 0) return;
 
     setSalvando(true);
     setErro(null);
@@ -103,15 +104,10 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     e.preventDefault();
     if (!os) return;
     if (!encerrarPor) return;
-    if (!responsavelId) {
-      setErro("Selecione o usuário responsável pela alteração");
-      return;
-    }
     setSalvando(true);
     setErro(null);
     try {
       const atualizada = await api.encerrarOrdem(os.id, {
-        usuarioId: Number(responsavelId),
         encerradoPor: encerrarPor,
         observacoesFinais: obsFinais || undefined,
       });
@@ -338,21 +334,6 @@ export default function OrdemDetalhe({ id }: { id: number }) {
             onSubmit={aplicarMudancas}
             className="grid sm:grid-cols-2 gap-3"
           >
-            <Field label="Realizado por" full>
-              <select
-                required
-                className={inputCls}
-                value={responsavelId}
-                onChange={(e) => setResponsavelId(e.target.value)}
-              >
-                <option value="">— selecionar usuário —</option>
-                {usuarios.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nome} ({u.email})
-                  </option>
-                ))}
-              </select>
-            </Field>
             <Field label="Novo status">
               <select
                 className={inputCls}
@@ -421,21 +402,6 @@ export default function OrdemDetalhe({ id }: { id: number }) {
       {!concluida && (
         <Section title="Encerrar OS">
           <form onSubmit={encerrar} className="grid sm:grid-cols-2 gap-3">
-            <Field label="Realizado por" full>
-              <select
-                required
-                className={inputCls}
-                value={responsavelId}
-                onChange={(e) => setResponsavelId(e.target.value)}
-              >
-                <option value="">— selecionar usuário —</option>
-                {usuarios.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nome} ({u.email})
-                  </option>
-                ))}
-              </select>
-            </Field>
             <Field label="Encerrada por">
               <input
                 required
@@ -495,14 +461,16 @@ export default function OrdemDetalhe({ id }: { id: number }) {
         )}
       </Section>
 
-      <div>
-        <button
-          onClick={remover}
-          className="text-red-400 text-sm hover:underline"
-        >
-          Remover esta OS
-        </button>
-      </div>
+      {usuarioLogado && usuarioLogado.tipo !== "CLIENTE" && (
+        <div>
+          <button
+            onClick={remover}
+            className="text-red-400 text-sm hover:underline"
+          >
+            Remover esta OS
+          </button>
+        </div>
+      )}
         </div>
       </main>
     </>
