@@ -173,7 +173,7 @@ model Anexo {
   ordemServico OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
   nomeArquivo  String       @map("nome_arquivo")
   tipoMime     String       @map("tipo_mime")
-  caminho      String
+  conteudo     Bytes
   tamanho      Int
   dataUpload   DateTime     @default(now()) @map("data_upload")
 

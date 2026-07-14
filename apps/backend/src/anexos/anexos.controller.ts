@@ -40,14 +40,13 @@ export class AnexosController {
     @CurrentUser() user: UsuarioAutenticado,
     @Res() res: Response,
   ) {
-    const anexo = await this.anexosService.findOne(id, user);
-    const caminho = this.anexosService.caminhoAbsoluto(anexo);
+    const anexo = await this.anexosService.obterParaDownload(id, user);
     res.setHeader('Content-Type', anexo.tipoMime);
     res.setHeader(
       'Content-Disposition',
       `inline; filename="${encodeURIComponent(anexo.nomeArquivo)}"`,
     );
-    res.sendFile(caminho);
+    res.send(Buffer.from(anexo.conteudo!));
   }
 
   @Delete('anexos/:id')

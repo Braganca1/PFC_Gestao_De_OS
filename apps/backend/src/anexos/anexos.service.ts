@@ -4,18 +4,28 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { TipoUsuario } from '@prisma/client';
-import { existsSync, rmSync } from 'fs';
-import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsuarioAutenticado } from '../auth/current-user.decorator';
 import { osPertenceAoUsuario } from '../ordens-servico/ordens-servico.service';
-import { UPLOADS_ROOT } from './multer.config';
+
+const metadados = {
+  id: true,
+  osId: true,
+  nomeArquivo: true,
+  tipoMime: true,
+  tamanho: true,
+  dataUpload: true,
+} as const;
 
 @Injectable()
 export class AnexosService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async upload(osId: number, user: UsuarioAutenticado, file?: Express.Multer.File) {
+  async upload(
+    osId: number,
+    user: UsuarioAutenticado,
+    file?: Express.Multer.File,
+  ) {
     if (!file) {
       throw new BadRequestException('Arquivo não enviado');
     }
@@ -26,11 +36,6 @@ export class AnexosService {
       !os ||
       (user.tipo === TipoUsuario.CLIENTE && !osPertenceAoUsuario(os, user))
     ) {
-      try {
-        rmSync(file.path, { force: true });
-      } catch {
-        // ignore
-      }
       throw new NotFoundException(`Ordem de serviço ${osId} não encontrada`);
     }
 
@@ -39,16 +44,36 @@ export class AnexosService {
         osId,
         nomeArquivo: file.originalname,
         tipoMime: file.mimetype,
-        caminho: file.filename,
+        conteudo: new Uint8Array(file.buffer),
         tamanho: file.size,
       },
+      select: metadados,
     });
   }
 
   async findOne(id: number, user?: UsuarioAutenticado) {
+    return this.buscarValidandoDono(id, user, false);
+  }
+
+  async obterParaDownload(id: number, user?: UsuarioAutenticado) {
+    return this.buscarValidandoDono(id, user, true);
+  }
+
+  async remove(id: number, user?: UsuarioAutenticado) {
+    await this.findOne(id, user);
+    await this.prisma.anexo.delete({ where: { id } });
+  }
+
+  private async buscarValidandoDono(
+    id: number,
+    user: UsuarioAutenticado | undefined,
+    comConteudo: boolean,
+  ) {
     const anexo = await this.prisma.anexo.findUnique({
       where: { id },
-      include: {
+      select: {
+        ...metadados,
+        conteudo: comConteudo,
         ordemServico: {
           select: { solicitanteId: true, emailSolicitante: true },
         },
@@ -63,22 +88,5 @@ export class AnexosService {
       throw new NotFoundException(`Anexo ${id} não encontrado`);
     }
     return anexo;
-  }
-
-  caminhoAbsoluto(anexo: { osId: number; caminho: string }): string {
-    return join(UPLOADS_ROOT, String(anexo.osId), anexo.caminho);
-  }
-
-  async remove(id: number, user?: UsuarioAutenticado) {
-    const anexo = await this.findOne(id, user);
-    const caminho = this.caminhoAbsoluto(anexo);
-    await this.prisma.anexo.delete({ where: { id } });
-    if (existsSync(caminho)) {
-      try {
-        rmSync(caminho, { force: true });
-      } catch {
-        // ignora erro de IO; registro já foi removido
-      }
-    }
   }
 }

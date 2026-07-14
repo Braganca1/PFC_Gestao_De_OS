@@ -4,15 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, StatusOS, TipoOS, TipoUsuario } from '@prisma/client';
-import { existsSync, rmSync } from 'fs';
-import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsuarioAutenticado } from '../auth/current-user.decorator';
 import {
   NotificacoesService,
   TIPO_NOTIFICACAO,
 } from '../notificacoes/notificacoes.service';
-import { UPLOADS_ROOT } from '../anexos/multer.config';
 import { CreateOrdemServicoDto } from './dto/create-ordem-servico.dto';
 import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
 import { EncerrarOrdemServicoDto } from './dto/encerrar-ordem-servico.dto';
@@ -31,7 +28,18 @@ const includeRelations = {
   osManutencaoArCondicionado: true,
   executor: { select: { id: true, nome: true, email: true } },
   solicitante: { select: { id: true, nome: true, email: true } },
-  anexos: { orderBy: { dataUpload: 'desc' } },
+  anexos: {
+    orderBy: { dataUpload: 'desc' },
+    // apenas metadados — nunca carregar os bytes do conteúdo nas listagens
+    select: {
+      id: true,
+      osId: true,
+      nomeArquivo: true,
+      tipoMime: true,
+      tamanho: true,
+      dataUpload: true,
+    },
+  },
 } satisfies Prisma.OrdemServicoInclude;
 
 /** Verifica se a OS pertence ao usuário (vínculo direto ou e-mail de solicitante legado). */
@@ -351,13 +359,6 @@ export class OrdensServicoService {
   async remove(id: number) {
     await this.findOne(id);
     await this.prisma.ordemServico.delete({ where: { id } });
-    const dir = join(UPLOADS_ROOT, String(id));
-    if (existsSync(dir)) {
-      try {
-        rmSync(dir, { recursive: true, force: true });
-      } catch {
-      }
-    }
   }
 
   private whereVisivelPara(
