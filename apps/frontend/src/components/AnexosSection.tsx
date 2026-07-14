@@ -116,7 +116,7 @@ export function AnexosSection({ osId, anexos, onChange }: Props) {
         <input
           ref={inputRef}
           type="file"
-          accept="image/*,application/pdf"
+          accept="image/*,.heic,.heif,application/pdf"
           disabled={enviando}
           onChange={(e) => {
             const f = e.target.files?.[0];
@@ -129,8 +129,9 @@ export function AnexosSection({ osId, anexos, onChange }: Props) {
         )}
       </div>
       <p className="text-[11px] text-[#546278]">
-        Tipos aceitos: imagens (JPG, PNG, WEBP, GIF) e PDF. Tamanho máximo: 10
-        MB.
+        Tipos aceitos: imagens (JPG, PNG, WEBP, GIF, HEIC) e PDF. Tamanho
+        máximo: 10 MB. Fotos HEIC (iPhone) são convertidas para JPG
+        automaticamente.
       </p>
     </section>
   );
