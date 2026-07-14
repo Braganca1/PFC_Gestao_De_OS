@@ -83,7 +83,6 @@ export interface Anexo {
   osId: number;
   nomeArquivo: string;
   tipoMime: string;
-  caminho: string;
   tamanho: number;
   dataUpload: string;
 }
