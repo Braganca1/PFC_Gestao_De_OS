@@ -54,15 +54,19 @@ export default function OrdemDetalhe({ id }: { id: number }) {
       setOs(osData);
       setUsuarios(usuariosData);
       setHistorico(historicoData);
-      setNovoStatus("");
-      setNovaPrioridade("");
-      setNovoExecutor("");
-      setObservacao("");
+      preencherFormulario(osData);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao carregar");
     } finally {
       setCarregando(false);
     }
+  }
+
+  function preencherFormulario(o: OrdemServico) {
+    setNovoStatus(o.status);
+    setNovaPrioridade(o.prioridade);
+    setNovoExecutor(o.executorId ? String(o.executorId) : "");
+    setObservacao(o.observacao ?? "");
   }
 
   useEffect(() => {
@@ -80,10 +84,13 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     e.preventDefault();
     if (!os) return;
     const payload: Record<string, unknown> = {};
-    if (novoStatus) payload.status = novoStatus;
-    if (novaPrioridade) payload.prioridade = novaPrioridade;
-    if (novoExecutor) payload.executorId = Number(novoExecutor);
-    if (observacao) payload.observacao = observacao;
+    if (novoStatus && novoStatus !== os.status) payload.status = novoStatus;
+    if (novaPrioridade && novaPrioridade !== os.prioridade)
+      payload.prioridade = novaPrioridade;
+    const executorAtual = os.executorId ? String(os.executorId) : "";
+    if (novoExecutor && novoExecutor !== executorAtual)
+      payload.executorId = Number(novoExecutor);
+    if (observacao !== (os.observacao ?? "")) payload.observacao = observacao;
     if (Object.keys(payload).length === 0) return;
 
     setSalvando(true);
@@ -91,10 +98,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     try {
       const atualizada = await api.atualizarOrdem(os.id, payload);
       setOs(atualizada);
-      setNovoStatus("");
-      setNovaPrioridade("");
-      setNovoExecutor("");
-      setObservacao("");
+      preencherFormulario(atualizada);
       const novoHist = await api
         .listarHistorico(os.id)
         .catch(() => [] as HistoricoOs[]);
@@ -423,13 +427,12 @@ export default function OrdemDetalhe({ id }: { id: number }) {
             onSubmit={aplicarMudancas}
             className="grid sm:grid-cols-2 gap-3"
           >
-            <Field label="Novo status">
+            <Field label="Status">
               <select
                 className={inputCls}
                 value={novoStatus}
                 onChange={(e) => setNovoStatus(e.target.value as StatusOS | "")}
               >
-                <option value="">— manter —</option>
                 {Object.entries(STATUS_LABEL)
                   // concluir só pelo encerramento formal
                   .filter(([k]) => k !== "CONCLUIDA")
@@ -440,7 +443,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
                   ))}
               </select>
             </Field>
-            <Field label="Nova prioridade">
+            <Field label="Prioridade">
               <select
                 className={inputCls}
                 value={novaPrioridade}
@@ -448,7 +451,6 @@ export default function OrdemDetalhe({ id }: { id: number }) {
                   setNovaPrioridade(e.target.value as Prioridade | "")
                 }
               >
-                <option value="">— manter —</option>
                 {Object.entries(PRIORIDADE_LABEL).map(([k, v]) => (
                   <option key={k} value={k}>
                     {v}
@@ -462,9 +464,11 @@ export default function OrdemDetalhe({ id }: { id: number }) {
                 value={novoExecutor}
                 onChange={(e) => setNovoExecutor(e.target.value)}
               >
-                <option value="">— manter —</option>
+                {!os.executorId && <option value="">Sem executor</option>}
                 {usuarios
-                  .filter((u) => u.tipo !== "CLIENTE")
+                  .filter(
+                    (u) => u.tipo !== "CLIENTE" || u.id === os.executorId,
+                  )
                   .map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.nome} ({u.email})

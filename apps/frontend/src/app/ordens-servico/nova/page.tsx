@@ -204,7 +204,7 @@ export default function NovaOrdemPage() {
                   value={form.secaoSolicitante}
                   onChange={(e) => set("secaoSolicitante", e.target.value)}
                 >
-                  <option value="">— selecionar —</option>
+                  <option value="">Selecione a seção</option>
                   {secoes.map((s) => (
                     <option key={s.id} value={s.nome}>
                       {s.nome}
