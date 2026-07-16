@@ -154,6 +154,16 @@ export const api = {
     });
   },
 
+  registrarExecucao(
+    id: number,
+    payload: { atividadesExecutadas: string; dataExecucao: string },
+  ): Promise<OrdemServico> {
+    return request<OrdemServico>(`/ordens-servico/${id}/execucao`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
+
   removerOrdem(id: number): Promise<void> {
     return request<void>(`/ordens-servico/${id}`, { method: "DELETE" });
   },

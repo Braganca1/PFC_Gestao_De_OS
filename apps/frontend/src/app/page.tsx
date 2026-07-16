@@ -9,9 +9,9 @@ export default function Home() {
 
   useEffect(() => {
     const usuario = getUsuario();
-    router.replace(
-      usuario?.tipo === "CLIENTE" ? "/ordens-servico" : "/dashboard",
-    );
+    const semDashboard =
+      usuario?.tipo === "CLIENTE" || usuario?.tipo === "EXECUTOR";
+    router.replace(semDashboard ? "/ordens-servico" : "/dashboard");
   }, [router]);
 
   return null;

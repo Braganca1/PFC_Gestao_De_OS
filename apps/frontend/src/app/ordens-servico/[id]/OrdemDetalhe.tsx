@@ -35,17 +35,20 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   const [observacao, setObservacao] = useState("");
   const [encerrarPor, setEncerrarPor] = useState("");
   const [obsFinais, setObsFinais] = useState("");
+  const [atividadesExec, setAtividadesExec] = useState("");
+  const [dataExec, setDataExec] = useState("");
   const [salvando, setSalvando] = useState(false);
 
   async function carregar() {
     try {
       setCarregando(true);
-      const ehCliente = getUsuario()?.tipo === "CLIENTE";
+      const tipo = getUsuario()?.tipo;
+      const gerencia = tipo === "GESTOR" || tipo === "ADMINISTRADOR";
       const [osData, usuariosData, historicoData] = await Promise.all([
         api.obterOrdem(id),
-        ehCliente
-          ? Promise.resolve([] as Usuario[])
-          : api.listarUsuarios().catch(() => [] as Usuario[]),
+        gerencia
+          ? api.listarUsuarios().catch(() => [] as Usuario[])
+          : Promise.resolve([] as Usuario[]),
         api.listarHistorico(id).catch(() => [] as HistoricoOs[]),
       ]);
       setOs(osData);
@@ -139,6 +142,30 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     }
   }
 
+  async function registrarExecucao(e: React.FormEvent) {
+    e.preventDefault();
+    if (!os || !atividadesExec || !dataExec) return;
+    setSalvando(true);
+    setErro(null);
+    try {
+      const atualizada = await api.registrarExecucao(os.id, {
+        atividadesExecutadas: atividadesExec,
+        dataExecucao: dataExec,
+      });
+      setOs(atualizada);
+      setAtividadesExec("");
+      setDataExec("");
+      const novoHist = await api
+        .listarHistorico(os.id)
+        .catch(() => [] as HistoricoOs[]);
+      setHistorico(novoHist);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao registrar execução");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   async function cancelarSolicitacao() {
     if (!os) return;
     if (!confirm(`Cancelar a solicitação ${os.numeroOs}?`)) return;
@@ -185,16 +212,25 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   const concluida =
     os.status === "CONCLUIDA" || os.status === "CANCELADA";
   const podeGerenciar =
-    !!usuarioLogado && usuarioLogado.tipo !== "CLIENTE";
+    !!usuarioLogado &&
+    (usuarioLogado.tipo === "GESTOR" || usuarioLogado.tipo === "ADMINISTRADOR");
   const ehDono =
     !!usuarioLogado &&
     (os.solicitanteId === usuarioLogado.id ||
       os.emailSolicitante.toLowerCase() === usuarioLogado.email.toLowerCase());
   const podeCancelarSolicitacao =
     !!usuarioLogado &&
-    usuarioLogado.tipo === "CLIENTE" &&
+    (usuarioLogado.tipo === "CLIENTE" || usuarioLogado.tipo === "EXECUTOR") &&
     ehDono &&
     os.status === "PEDIDO";
+  const ehExecutorDesignado =
+    !!usuarioLogado &&
+    usuarioLogado.tipo === "EXECUTOR" &&
+    os.executorId === usuarioLogado.id;
+  const podeRegistrarExecucao =
+    !concluida && (podeGerenciar || ehExecutorDesignado);
+  const podeRemover =
+    !!usuarioLogado && usuarioLogado.tipo === "ADMINISTRADOR";
 
   return (
     <>
@@ -344,6 +380,26 @@ export default function OrdemDetalhe({ id }: { id: number }) {
         </Section>
       )}
 
+      {(os.atividadesExecutadas || os.dataExecucao) && (
+        <Section title="Execução">
+          <Grid>
+            <Info
+              label="Data da execução"
+              value={
+                os.dataExecucao
+                  ? new Date(os.dataExecucao).toLocaleDateString("pt-BR")
+                  : "—"
+              }
+            />
+            <Info
+              label="Atividades executadas"
+              value={os.atividadesExecutadas ?? "—"}
+              full
+            />
+          </Grid>
+        </Section>
+      )}
+
       {os.encerradoEm && (
         <Section title="Encerramento">
           <Grid>
@@ -374,11 +430,14 @@ export default function OrdemDetalhe({ id }: { id: number }) {
                 onChange={(e) => setNovoStatus(e.target.value as StatusOS | "")}
               >
                 <option value="">— manter —</option>
-                {Object.entries(STATUS_LABEL).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
+                {Object.entries(STATUS_LABEL)
+                  // concluir só pelo encerramento formal
+                  .filter(([k]) => k !== "CONCLUIDA")
+                  .map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
               </select>
             </Field>
             <Field label="Nova prioridade">
@@ -404,11 +463,13 @@ export default function OrdemDetalhe({ id }: { id: number }) {
                 onChange={(e) => setNovoExecutor(e.target.value)}
               >
                 <option value="">— manter —</option>
-                {usuarios.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nome} ({u.email})
-                  </option>
-                ))}
+                {usuarios
+                  .filter((u) => u.tipo !== "CLIENTE")
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.nome} ({u.email})
+                    </option>
+                  ))}
               </select>
             </Field>
             <Field label="Observação" full>
@@ -426,6 +487,42 @@ export default function OrdemDetalhe({ id }: { id: number }) {
                 className="bg-[#7a8c3a] hover:bg-[#8fa042] text-[#0f1319] font-semibold px-5 py-2 rounded text-sm transition-colors disabled:opacity-50"
               >
                 Aplicar mudanças
+              </button>
+            </div>
+          </form>
+        </Section>
+      )}
+
+      {podeRegistrarExecucao && (
+        <Section title="Registrar execução">
+          <form onSubmit={registrarExecucao} className="grid sm:grid-cols-2 gap-3">
+            <Field label="Data da execução">
+              <input
+                type="date"
+                required
+                max={new Date().toISOString().slice(0, 10)}
+                className={inputCls}
+                value={dataExec}
+                onChange={(e) => setDataExec(e.target.value)}
+              />
+            </Field>
+            <Field label="Atividades executadas" full>
+              <textarea
+                required
+                className={inputCls}
+                rows={3}
+                placeholder="Descreva o que foi realizado no serviço"
+                value={atividadesExec}
+                onChange={(e) => setAtividadesExec(e.target.value)}
+              />
+            </Field>
+            <div className="sm:col-span-2">
+              <button
+                type="submit"
+                disabled={salvando}
+                className="bg-[#7a8c3a] hover:bg-[#8fa042] text-[#0f1319] font-semibold px-5 py-2 rounded text-sm transition-colors disabled:opacity-50"
+              >
+                Registrar execução
               </button>
             </div>
           </form>
@@ -506,7 +603,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
         </div>
       )}
 
-      {podeGerenciar && (
+      {podeRemover && (
         <div>
           <button
             onClick={remover}
@@ -532,6 +629,8 @@ const ROTULO_CAMPO: Record<string, string> = {
   local: "Local",
   encerradoPor: "Encerrado por",
   observacoesFinais: "Observações finais",
+  atividadesExecutadas: "Atividades executadas",
+  dataExecucao: "Data da execução",
 };
 
 function rotuloCampo(campo: string): string {

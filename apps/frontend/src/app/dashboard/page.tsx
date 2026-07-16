@@ -68,7 +68,8 @@ export default function DashboardPage() {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    if (getUsuario()?.tipo === "CLIENTE") {
+    const tipo = getUsuario()?.tipo;
+    if (tipo === "CLIENTE" || tipo === "EXECUTOR") {
       router.replace("/ordens-servico");
       return;
     }

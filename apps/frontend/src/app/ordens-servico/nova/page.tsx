@@ -70,12 +70,14 @@ export default function NovaOrdemPage() {
   const [form, setForm] = useState<FormState>(ESTADO_INICIAL);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [ehCliente, setEhCliente] = useState(false);
+  const [ehSolicitanteComum, setEhSolicitanteComum] = useState(false);
 
   useEffect(() => {
     const usuario = getUsuario();
     if (!usuario) return;
-    setEhCliente(usuario.tipo === "CLIENTE");
+    setEhSolicitanteComum(
+      usuario.tipo === "CLIENTE" || usuario.tipo === "EXECUTOR",
+    );
     setForm((f) => ({
       ...f,
       emailSolicitante: f.emailSolicitante || usuario.email,
@@ -178,12 +180,12 @@ export default function NovaOrdemPage() {
                 type="email"
                 required
                 placeholder="solicitante@ime.eb.br"
-                className={`${inputCls} ${ehCliente ? "opacity-60 cursor-not-allowed" : ""}`}
+                className={`${inputCls} ${ehSolicitanteComum ? "opacity-60 cursor-not-allowed" : ""}`}
                 value={form.emailSolicitante}
                 onChange={(e) => set("emailSolicitante", e.target.value)}
-                readOnly={ehCliente}
+                readOnly={ehSolicitanteComum}
                 title={
-                  ehCliente
+                  ehSolicitanteComum
                     ? "A OS será aberta com o e-mail da sua conta"
                     : undefined
                 }

@@ -14,7 +14,7 @@ export type StatusOS =
 
 export type Prioridade = "BAIXA" | "MEDIA" | "ALTA" | "URGENTE";
 
-export type TipoUsuario = "CLIENTE" | "GESTOR" | "ADMINISTRADOR";
+export type TipoUsuario = "CLIENTE" | "EXECUTOR" | "GESTOR" | "ADMINISTRADOR";
 
 export interface Usuario {
   id: number;
@@ -71,6 +71,8 @@ export interface OrdemServico {
   encerradoEm: string | null;
   encerradoPor: string | null;
   observacoesFinais: string | null;
+  atividadesExecutadas: string | null;
+  dataExecucao: string | null;
   osConstrucaoCivil: { id: number } | null;
   osEletrico: { id: number } | null;
   osInstalacaoArCondicionado: ({ id: number } & DadosInstalacaoAr) | null;
@@ -137,6 +139,7 @@ export interface HistoricoOs {
 
 export const TIPO_USUARIO_LABEL: Record<TipoUsuario, string> = {
   CLIENTE: "Cliente",
+  EXECUTOR: "Executor",
   GESTOR: "Gestor",
   ADMINISTRADOR: "Administrador",
 };
