@@ -9,6 +9,7 @@ export const TIPO_NOTIFICACAO = {
   MUDANCA_STATUS: 'MUDANCA_STATUS',
   OS_CONCLUIDA: 'OS_CONCLUIDA',
   OS_CANCELADA: 'OS_CANCELADA',
+  REGISTRO_EXECUCAO: 'REGISTRO_EXECUCAO',
 } as const;
 
 export interface NovaNotificacao {

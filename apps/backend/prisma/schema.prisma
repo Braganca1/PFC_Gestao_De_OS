@@ -11,6 +11,7 @@ datasource db {
 
 enum TipoUsuario {
   CLIENTE
+  EXECUTOR
   GESTOR
   ADMINISTRADOR
 }
@@ -86,6 +87,9 @@ model OrdemServico {
   encerradoEm       DateTime? @map("encerrado_em")
   encerradoPor      String?   @map("encerrado_por")
   observacoesFinais String?   @map("observacoes_finais")
+
+  atividadesExecutadas String?   @map("atividades_executadas")
+  dataExecucao         DateTime? @map("data_execucao")
 
   solicitantes               Usuario[]                   @relation("Solicitantes")
   osConstrucaoCivil          OsConstrucaoCivil?

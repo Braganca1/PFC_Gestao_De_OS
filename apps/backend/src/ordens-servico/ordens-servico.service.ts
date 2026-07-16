@@ -13,6 +13,7 @@ import {
 import { CreateOrdemServicoDto } from './dto/create-ordem-servico.dto';
 import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
 import { EncerrarOrdemServicoDto } from './dto/encerrar-ordem-servico.dto';
+import { RegistrarExecucaoDto } from './dto/registrar-execucao.dto';
 
 export interface FindAllFiltros {
   numeroOs?: string;
@@ -53,6 +54,24 @@ export function osPertenceAoUsuario(
   );
 }
 
+export function usuarioPodeAcessarOs(
+  os: {
+    solicitanteId: number | null;
+    emailSolicitante: string;
+    executorId: number | null;
+  },
+  user: UsuarioAutenticado,
+): boolean {
+  switch (user.tipo) {
+    case TipoUsuario.CLIENTE:
+      return osPertenceAoUsuario(os, user);
+    case TipoUsuario.EXECUTOR:
+      return osPertenceAoUsuario(os, user) || os.executorId === user.sub;
+    default:
+      return true;
+  }
+}
+
 type OrdemServicoComRelacoes = Prisma.OrdemServicoGetPayload<{
   include: typeof includeRelations;
 }>;
@@ -75,7 +94,9 @@ type CampoMonitorado =
   | 'piso'
   | 'local'
   | 'encerradoPor'
-  | 'observacoesFinais';
+  | 'observacoesFinais'
+  | 'atividadesExecutadas'
+  | 'dataExecucao';
 
 @Injectable()
 export class OrdensServicoService {
@@ -103,9 +124,10 @@ export class OrdensServicoService {
     this.validarDadosEspecificos(dto);
 
     const numeroOs = await this.gerarNumeroOs();
-    // cliente sempre abre OS em nome próprio; gestor/admin podem abrir para terceiros
     const emailSolicitante =
-      user.tipo === TipoUsuario.CLIENTE ? user.email : dto.emailSolicitante;
+      user.tipo === TipoUsuario.CLIENTE || user.tipo === TipoUsuario.EXECUTOR
+        ? user.email
+        : dto.emailSolicitante;
 
     return this.prisma.$transaction(async (tx) => {
       const os = await tx.ordemServico.create({
@@ -188,12 +210,7 @@ export class OrdensServicoService {
       where: { id },
       include: includeRelations,
     });
-    if (
-      !os ||
-      (user &&
-        user.tipo === TipoUsuario.CLIENTE &&
-        !osPertenceAoUsuario(os, user))
-    ) {
+    if (!os || (user && !usuarioPodeAcessarOs(os, user))) {
       throw new NotFoundException(`Ordem de serviço ${id} não encontrada`);
     }
     return os;
@@ -203,6 +220,13 @@ export class OrdensServicoService {
     const patch = dto;
     await this.validarUsuario(usuarioId);
     const antes = await this.findOne(id);
+    this.validarNaoTerminal(antes.status);
+
+    if (patch.status === StatusOS.CONCLUIDA) {
+      throw new BadRequestException(
+        'Para concluir a OS utilize o encerramento formal',
+      );
+    }
 
     if (patch.executorId !== undefined && patch.executorId !== null) {
       const executor = await this.prisma.usuario.findUnique({
@@ -345,6 +369,62 @@ export class OrdensServicoService {
     });
   }
 
+  async registrarExecucao(
+    id: number,
+    dto: RegistrarExecucaoDto,
+    user: UsuarioAutenticado,
+  ) {
+    const antes = await this.findOne(id, user);
+
+    if (
+      user.tipo === TipoUsuario.CLIENTE ||
+      (user.tipo === TipoUsuario.EXECUTOR && antes.executorId !== user.sub)
+    ) {
+      throw new NotFoundException(`Ordem de serviço ${id} não encontrada`);
+    }
+    this.validarNaoTerminal(antes.status);
+
+    const dataExecucao = new Date(dto.dataExecucao);
+    const fimDeHoje = new Date();
+    fimDeHoje.setHours(23, 59, 59, 999);
+    if (dataExecucao > fimDeHoje) {
+      throw new BadRequestException('Data da execução não pode ser futura');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const depois = await tx.ordemServico.update({
+        where: { id },
+        data: {
+          atividadesExecutadas: dto.atividadesExecutadas,
+          dataExecucao,
+        },
+        include: includeRelations,
+      });
+      await this.registrarHistorico(tx, id, user.sub, antes, depois, [
+        'atividadesExecutadas',
+        'dataExecucao',
+      ]);
+      await this.notificacoes.criarVarias(
+        tx,
+        await this.idsGestores(tx, user.sub),
+        {
+          osId: id,
+          tipo: TIPO_NOTIFICACAO.REGISTRO_EXECUCAO,
+          titulo: `Execução registrada na OS ${depois.numeroOs} por ${user.nome}`,
+        },
+      );
+      return depois;
+    });
+  }
+
+  private validarNaoTerminal(status: StatusOS) {
+    if (status === StatusOS.CONCLUIDA || status === StatusOS.CANCELADA) {
+      throw new BadRequestException(
+        'OS concluída ou cancelada não pode mais ser alterada',
+      );
+    }
+  }
+
   async findHistorico(id: number, user?: UsuarioAutenticado) {
     await this.findOne(id, user);
     return this.prisma.historicoOs.findMany({
@@ -364,13 +444,18 @@ export class OrdensServicoService {
   private whereVisivelPara(
     user: UsuarioAutenticado,
   ): Prisma.OrdemServicoWhereInput {
-    if (user.tipo !== TipoUsuario.CLIENTE) return {};
-    return {
-      OR: [
-        { solicitanteId: user.sub },
-        { emailSolicitante: { equals: user.email, mode: 'insensitive' } },
-      ],
-    };
+    const dono: Prisma.OrdemServicoWhereInput[] = [
+      { solicitanteId: user.sub },
+      { emailSolicitante: { equals: user.email, mode: 'insensitive' } },
+    ];
+    switch (user.tipo) {
+      case TipoUsuario.CLIENTE:
+        return { OR: dono };
+      case TipoUsuario.EXECUTOR:
+        return { OR: [...dono, { executorId: user.sub }] };
+      default:
+        return {};
+    }
   }
 
   private async validarUsuario(usuarioId: number) {

@@ -3,11 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { TipoUsuario } from '@prisma/client';
 import convert = require('heic-convert');
 import { PrismaService } from '../prisma/prisma.service';
 import { UsuarioAutenticado } from '../auth/current-user.decorator';
-import { osPertenceAoUsuario } from '../ordens-servico/ordens-servico.service';
+import { usuarioPodeAcessarOs } from '../ordens-servico/ordens-servico.service';
 
 const metadados = {
   id: true,
@@ -35,10 +34,7 @@ export class AnexosService {
     const os = await this.prisma.ordemServico.findUnique({
       where: { id: osId },
     });
-    if (
-      !os ||
-      (user.tipo === TipoUsuario.CLIENTE && !osPertenceAoUsuario(os, user))
-    ) {
+    if (!os || !usuarioPodeAcessarOs(os, user)) {
       throw new NotFoundException(`Ordem de serviço ${osId} não encontrada`);
     }
 
@@ -97,16 +93,15 @@ export class AnexosService {
         ...metadados,
         conteudo: comConteudo,
         ordemServico: {
-          select: { solicitanteId: true, emailSolicitante: true },
+          select: {
+            solicitanteId: true,
+            emailSolicitante: true,
+            executorId: true,
+          },
         },
       },
     });
-    if (
-      !anexo ||
-      (user &&
-        user.tipo === TipoUsuario.CLIENTE &&
-        !osPertenceAoUsuario(anexo.ordemServico, user))
-    ) {
+    if (!anexo || (user && !usuarioPodeAcessarOs(anexo.ordemServico, user))) {
       throw new NotFoundException(`Anexo ${id} não encontrado`);
     }
     return anexo;

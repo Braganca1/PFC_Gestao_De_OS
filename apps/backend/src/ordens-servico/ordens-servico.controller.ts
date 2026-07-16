@@ -21,6 +21,7 @@ import { OrdensServicoService } from './ordens-servico.service';
 import { CreateOrdemServicoDto } from './dto/create-ordem-servico.dto';
 import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
 import { EncerrarOrdemServicoDto } from './dto/encerrar-ordem-servico.dto';
+import { RegistrarExecucaoDto } from './dto/registrar-execucao.dto';
 
 @Controller('ordens-servico')
 export class OrdensServicoController {
@@ -72,6 +73,15 @@ export class OrdensServicoController {
     return this.ordensService.cancelar(id, user);
   }
 
+  @Patch(':id/execucao')
+  registrarExecucao(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RegistrarExecucaoDto,
+    @CurrentUser() user: UsuarioAutenticado,
+  ) {
+    return this.ordensService.registrarExecucao(id, dto, user);
+  }
+
   @Patch(':id')
   @Roles(TipoUsuario.GESTOR, TipoUsuario.ADMINISTRADOR)
   update(
@@ -93,7 +103,7 @@ export class OrdensServicoController {
   }
 
   @Delete(':id')
-  @Roles(TipoUsuario.GESTOR, TipoUsuario.ADMINISTRADOR)
+  @Roles(TipoUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.ordensService.remove(id);
