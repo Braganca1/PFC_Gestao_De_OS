@@ -46,6 +46,13 @@ enum CanalNotificacao {
 
 // ─── Entidades ────────────────────────────────────────────────────────────────
 
+model Secao {
+  id   Int    @id @default(autoincrement())
+  nome String @unique
+
+  @@map("secoes")
+}
+
 model Usuario {
   id        Int         @id @default(autoincrement())
   nome      String

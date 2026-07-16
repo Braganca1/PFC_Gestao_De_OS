@@ -7,6 +7,7 @@ import { OrdensServicoModule } from './ordens-servico/ordens-servico.module';
 import { AnexosModule } from './anexos/anexos.module';
 import { EstatisticasModule } from './estatisticas/estatisticas.module';
 import { NotificacoesModule } from './notificacoes/notificacoes.module';
+import { SecoesModule } from './secoes/secoes.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { NotificacoesModule } from './notificacoes/notificacoes.module';
     AnexosModule,
     EstatisticasModule,
     NotificacoesModule,
+    SecoesModule,
   ],
 })
 export class AppModule {}
