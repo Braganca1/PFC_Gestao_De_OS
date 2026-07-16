@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { getUsuario, nomeProprio } from "@/lib/auth";
-import { TIPO_OS_LABEL, type TipoOS } from "@/lib/types";
+import { TIPO_OS_LABEL, type Secao, type TipoOS } from "@/lib/types";
 import { TopBar } from "@/components/TopBar";
 
 interface FormState {
@@ -71,6 +71,7 @@ export default function NovaOrdemPage() {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [ehSolicitanteComum, setEhSolicitanteComum] = useState(false);
+  const [secoes, setSecoes] = useState<Secao[]>([]);
 
   useEffect(() => {
     const usuario = getUsuario();
@@ -83,6 +84,10 @@ export default function NovaOrdemPage() {
       emailSolicitante: f.emailSolicitante || usuario.email,
       nomeRepresentante: f.nomeRepresentante || nomeProprio(usuario.nome),
     }));
+    api
+      .listarSecoes()
+      .then(setSecoes)
+      .catch(() => setSecoes([]));
   }, []);
 
   function set<K extends keyof FormState>(campo: K, valor: FormState[K]) {
@@ -192,13 +197,30 @@ export default function NovaOrdemPage() {
               />
             </Field>
             <Field label="Seção" required>
-              <input
-                required
-                placeholder="Ex: Seção de Informática"
-                className={inputCls}
-                value={form.secaoSolicitante}
-                onChange={(e) => set("secaoSolicitante", e.target.value)}
-              />
+              {secoes.length > 0 ? (
+                <select
+                  required
+                  className={inputCls}
+                  value={form.secaoSolicitante}
+                  onChange={(e) => set("secaoSolicitante", e.target.value)}
+                >
+                  <option value="">— selecionar —</option>
+                  {secoes.map((s) => (
+                    <option key={s.id} value={s.nome}>
+                      {s.nome}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                // fallback: sem seções cadastradas, aceita texto livre
+                <input
+                  required
+                  placeholder="Ex: Seção de Informática"
+                  className={inputCls}
+                  value={form.secaoSolicitante}
+                  onChange={(e) => set("secaoSolicitante", e.target.value)}
+                />
+              )}
             </Field>
             <Field label="Nome do representante" full required>
               <input

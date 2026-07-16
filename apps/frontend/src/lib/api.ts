@@ -5,6 +5,7 @@ import type {
   HistoricoOs,
   Notificacao,
   OrdemServico,
+  Secao,
   StatusOS,
   TipoOS,
   TipoUsuario,
@@ -200,6 +201,21 @@ export const api = {
 
   obterEstatisticas(): Promise<EstatisticasOS> {
     return request<EstatisticasOS>(`/estatisticas`);
+  },
+
+  listarSecoes(): Promise<Secao[]> {
+    return request<Secao[]>(`/secoes`);
+  },
+
+  criarSecao(payload: { nome: string }): Promise<Secao> {
+    return request<Secao>(`/secoes`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  removerSecao(id: number): Promise<void> {
+    return request<void>(`/secoes/${id}`, { method: "DELETE" });
   },
 
   listarNotificacoes(): Promise<Notificacao[]> {

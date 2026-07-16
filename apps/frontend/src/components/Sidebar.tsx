@@ -46,6 +46,13 @@ const NAV_ITEMS: NavItem[] = [
     matchPrefix: "/usuarios",
     papeis: ["ADMINISTRADOR"],
   },
+  {
+    label: "Seções",
+    icon: "▤",
+    href: "/secoes",
+    matchPrefix: "/secoes",
+    papeis: ["ADMINISTRADOR"],
+  },
 ];
 
 function iniciais(nome: string): string {

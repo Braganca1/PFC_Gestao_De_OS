@@ -116,6 +116,11 @@ export interface EstatisticasOS {
   ultimasOs: OrdemServico[];
 }
 
+export interface Secao {
+  id: number;
+  nome: string;
+}
+
 export interface Notificacao {
   id: number;
   osId: number;
