@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { useMenu } from "@/components/AppShell";
 import type { Notificacao } from "@/lib/types";
 
 interface TopBarProps {
@@ -12,6 +13,7 @@ interface TopBarProps {
 
 export function TopBar({ title, subtitle }: TopBarProps) {
   const router = useRouter();
+  const { abrir } = useMenu();
   const [naoLidas, setNaoLidas] = useState(0);
   const [aberto, setAberto] = useState(false);
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
@@ -86,11 +88,19 @@ export function TopBar({ title, subtitle }: TopBarProps) {
   }
 
   return (
-    <header className="h-14 bg-[#161c26] border-b border-[#1e2838] flex items-center px-6 gap-4 shrink-0">
-      <div className="flex-1">
-        <div className="text-white font-bold text-[15px]">{title}</div>
+    <header className="h-14 bg-[#161c26] border-b border-[#1e2838] flex items-center px-4 md:px-6 gap-3 md:gap-4 shrink-0">
+      <button
+        type="button"
+        onClick={abrir}
+        className="md:hidden text-[#bcc4d0] hover:text-white text-xl leading-none px-1"
+        aria-label="Abrir menu"
+      >
+        ☰
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="text-white font-bold text-[15px] truncate">{title}</div>
         {subtitle && (
-          <div className="text-[#7a8fa8] text-[11px]">{subtitle}</div>
+          <div className="text-[#7a8fa8] text-[11px] truncate">{subtitle}</div>
         )}
       </div>
       <div className="relative" ref={dropdownRef}>

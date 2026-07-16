@@ -85,7 +85,7 @@ export default function DashboardPage() {
         title="Dashboard"
         subtitle="Visão geral das ordens de serviço"
       />
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6">
         {carregando ? (
           <div className="text-sm text-[#546278]">Carregando…</div>
         ) : erro ? (

@@ -148,7 +148,7 @@ export default function NovaOrdemPage() {
         title="Nova Ordem de Serviço"
         subtitle="Registrar novo pedido de serviço"
       />
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6">
         <div className="space-y-6 max-w-3xl">
       {erro && (
         <div className="bg-red-500/10 text-red-300 border border-red-500/20 px-4 py-3 rounded text-sm">

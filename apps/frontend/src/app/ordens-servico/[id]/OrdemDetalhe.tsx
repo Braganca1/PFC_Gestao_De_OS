@@ -162,7 +162,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     return (
       <>
         <TopBar title="Carregando…" />
-        <main className="flex-1 overflow-y-auto p-6 text-sm text-[#546278]">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 text-sm text-[#546278]">
           Carregando…
         </main>
       </>
@@ -171,7 +171,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     return (
       <>
         <TopBar title="Erro" />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <div className="bg-red-500/10 text-red-300 px-4 py-3 rounded text-sm">
             {erro}
           </div>
@@ -199,9 +199,9 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   return (
     <>
       <TopBar title={os.numeroOs} subtitle={TIPO_OS_LABEL[os.tipo]} />
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6">
         <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <Link
             href="/ordens-servico"
@@ -210,7 +210,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
             ← voltar
           </Link>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <StatusBadge status={os.status} />
           <PrioridadeBadge prioridade={os.prioridade} />
         </div>

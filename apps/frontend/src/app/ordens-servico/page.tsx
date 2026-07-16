@@ -59,7 +59,7 @@ export default function OrdensServicoPage() {
   }
 
   const inputBusca =
-    "px-3 py-1.5 rounded-md border border-[#1e2838] bg-[#0f1319] text-[#f8fafc] text-xs outline-none placeholder:text-[#546278] w-44 focus:border-[#7a8c3a]";
+    "px-3 py-1.5 rounded-md border border-[#1e2838] bg-[#0f1319] text-[#f8fafc] text-xs outline-none placeholder:text-[#546278] w-full sm:w-44 focus:border-[#7a8c3a]";
 
   const statusAtivo = filtros.status ?? "";
 
@@ -69,7 +69,7 @@ export default function OrdensServicoPage() {
         title="Ordens de Serviço"
         subtitle="Gerenciamento de todas as OS"
       />
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6">
         <div className="bg-[#161c26] border border-[#1e2838] rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-[#1e2838] flex items-center gap-3 flex-wrap">
             <div className="font-bold text-sm text-white flex-1">
@@ -94,7 +94,7 @@ export default function OrdensServicoPage() {
                 );
               })}
             </div>
-            <form onSubmit={aplicarBusca}>
+            <form onSubmit={aplicarBusca} className="w-full sm:w-auto">
               <input
                 className={inputBusca}
                 placeholder="Buscar OS..."
@@ -118,7 +118,40 @@ export default function OrdensServicoPage() {
               Nenhuma OS encontrada.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* mobile: cards */}
+            <ul className="md:hidden divide-y divide-[#1e2838]">
+              {ordens.map((os) => (
+                <li key={os.id}>
+                  <Link
+                    href={`/ordens-servico/${os.id}`}
+                    className="block px-4 py-3 hover:bg-[#1e2838] transition-colors space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[#7a8c3a] font-bold text-sm">
+                        {os.numeroOs}
+                      </span>
+                      <TypeBadge tipo={os.tipo} />
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <StatusBadge status={os.status} />
+                      <PrioridadeBadge prioridade={os.prioridade} />
+                    </div>
+                    <div className="text-xs text-[#bcc4d0]">
+                      {os.nomeRepresentante}
+                      <span className="text-[#546278]">
+                        {" "}
+                        • {os.secaoSolicitante} •{" "}
+                        {new Date(os.dataHora).toLocaleDateString("pt-BR")}
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            {/* desktop: tabela */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="bg-[#0f1319]">
@@ -189,6 +222,7 @@ export default function OrdensServicoPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
       </main>
