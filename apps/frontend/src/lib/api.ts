@@ -157,7 +157,11 @@ export const api = {
 
   registrarExecucao(
     id: number,
-    payload: { atividadesExecutadas: string; dataExecucao: string },
+    payload: {
+      atividadesExecutadas: string;
+      dataExecucao: string;
+      materiaisUtilizados?: string;
+    },
   ): Promise<OrdemServico> {
     return request<OrdemServico>(`/ordens-servico/${id}/execucao`, {
       method: "PATCH",

@@ -19,6 +19,29 @@ import { PrioridadeBadge, StatusBadge } from "@/components/StatusBadge";
 import { TopBar } from "@/components/TopBar";
 import { AnexosSection } from "@/components/AnexosSection";
 
+interface LinhaMaterial {
+  material: string;
+  unidade: string;
+  quantidade: string;
+}
+
+const LINHA_MATERIAL_VAZIA: LinhaMaterial = {
+  material: "",
+  unidade: "",
+  quantidade: "",
+};
+
+function serializarMateriais(linhas: LinhaMaterial[]): string {
+  return linhas
+    .filter((l) => l.material.trim())
+    .map((l) =>
+      [l.material.trim(), l.unidade.trim(), l.quantidade.trim()]
+        .filter(Boolean)
+        .join(" — "),
+    )
+    .join("\n");
+}
+
 export default function OrdemDetalhe({ id }: { id: number }) {
   const router = useRouter();
   const [os, setOs] = useState<OrdemServico | null>(null);
@@ -37,6 +60,9 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   const [obsFinais, setObsFinais] = useState("");
   const [atividadesExec, setAtividadesExec] = useState("");
   const [dataExec, setDataExec] = useState("");
+  const [materiaisExec, setMateriaisExec] = useState<LinhaMaterial[]>([
+    LINHA_MATERIAL_VAZIA,
+  ]);
   const [salvando, setSalvando] = useState(false);
 
   async function carregar() {
@@ -152,13 +178,16 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     setSalvando(true);
     setErro(null);
     try {
+      const materiais = serializarMateriais(materiaisExec);
       const atualizada = await api.registrarExecucao(os.id, {
         atividadesExecutadas: atividadesExec,
         dataExecucao: dataExec,
+        materiaisUtilizados: materiais || undefined,
       });
       setOs(atualizada);
       setAtividadesExec("");
       setDataExec("");
+      setMateriaisExec([LINHA_MATERIAL_VAZIA]);
       const novoHist = await api
         .listarHistorico(os.id)
         .catch(() => [] as HistoricoOs[]);
@@ -400,6 +429,34 @@ export default function OrdemDetalhe({ id }: { id: number }) {
               value={os.atividadesExecutadas ?? "—"}
               full
             />
+            {os.materiaisUtilizados && (
+              <div className="text-sm sm:col-span-2">
+                <div className="text-[11px] uppercase tracking-wide text-[#546278]">
+                  Materiais utilizados
+                </div>
+                <table className="mt-1 text-sm">
+                  <tbody>
+                    {os.materiaisUtilizados.split("\n").map((linha, i) => {
+                      const [material, unidade, quantidade] =
+                        linha.split(" — ");
+                      return (
+                        <tr key={i}>
+                          <td className="text-[#f8fafc] pr-6 py-0.5">
+                            {material}
+                          </td>
+                          <td className="text-[#bcc4d0] pr-6 py-0.5">
+                            {unidade ?? ""}
+                          </td>
+                          <td className="text-[#bcc4d0] py-0.5">
+                            {quantidade ?? ""}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Grid>
         </Section>
       )}
@@ -520,6 +577,85 @@ export default function OrdemDetalhe({ id }: { id: number }) {
                 onChange={(e) => setAtividadesExec(e.target.value)}
               />
             </Field>
+            <div className="sm:col-span-2 space-y-1">
+              <span className="text-[11px] uppercase tracking-wide text-[#546278]">
+                Materiais utilizados
+              </span>
+              <div className="space-y-2">
+                <div className="grid grid-cols-[minmax(0,1fr)_5.5rem_4.5rem_1.5rem] gap-2 text-[10px] uppercase tracking-wide text-[#546278]">
+                  <span>Material</span>
+                  <span>Unidade</span>
+                  <span>Qtd</span>
+                  <span />
+                </div>
+                {materiaisExec.map((linha, i) => (
+                  <div
+                    key={i}
+                    className="grid grid-cols-[minmax(0,1fr)_5.5rem_4.5rem_1.5rem] gap-2 items-center"
+                  >
+                    <input
+                      className={inputCls}
+                      placeholder="Ex: Tijolo"
+                      value={linha.material}
+                      onChange={(e) =>
+                        setMateriaisExec((ls) =>
+                          ls.map((l, j) =>
+                            j === i ? { ...l, material: e.target.value } : l,
+                          ),
+                        )
+                      }
+                    />
+                    <input
+                      className={inputCls}
+                      placeholder="5kg"
+                      value={linha.unidade}
+                      onChange={(e) =>
+                        setMateriaisExec((ls) =>
+                          ls.map((l, j) =>
+                            j === i ? { ...l, unidade: e.target.value } : l,
+                          ),
+                        )
+                      }
+                    />
+                    <input
+                      className={inputCls}
+                      placeholder="3"
+                      value={linha.quantidade}
+                      onChange={(e) =>
+                        setMateriaisExec((ls) =>
+                          ls.map((l, j) =>
+                            j === i ? { ...l, quantidade: e.target.value } : l,
+                          ),
+                        )
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMateriaisExec((ls) =>
+                          ls.length > 1
+                            ? ls.filter((_, j) => j !== i)
+                            : [LINHA_MATERIAL_VAZIA],
+                        )
+                      }
+                      className="text-[#546278] hover:text-red-400 text-base leading-none"
+                      aria-label="Remover material"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMateriaisExec((ls) => [...ls, LINHA_MATERIAL_VAZIA])
+                  }
+                  className="text-[11px] text-[#c8d67a] hover:underline"
+                >
+                  + Adicionar material
+                </button>
+              </div>
+            </div>
             <div className="sm:col-span-2">
               <button
                 type="submit"
@@ -635,6 +771,7 @@ const ROTULO_CAMPO: Record<string, string> = {
   observacoesFinais: "Observações finais",
   atividadesExecutadas: "Atividades executadas",
   dataExecucao: "Data da execução",
+  materiaisUtilizados: "Materiais utilizados",
 };
 
 function rotuloCampo(campo: string): string {
