@@ -96,7 +96,8 @@ type CampoMonitorado =
   | 'encerradoPor'
   | 'observacoesFinais'
   | 'atividadesExecutadas'
-  | 'dataExecucao';
+  | 'dataExecucao'
+  | 'materiaisUtilizados';
 
 @Injectable()
 export class OrdensServicoService {
@@ -397,12 +398,14 @@ export class OrdensServicoService {
         data: {
           atividadesExecutadas: dto.atividadesExecutadas,
           dataExecucao,
+          materiaisUtilizados: dto.materiaisUtilizados,
         },
         include: includeRelations,
       });
       await this.registrarHistorico(tx, id, user.sub, antes, depois, [
         'atividadesExecutadas',
         'dataExecucao',
+        'materiaisUtilizados',
       ]);
       await this.notificacoes.criarVarias(
         tx,

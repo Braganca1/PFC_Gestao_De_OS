@@ -1,4 +1,10 @@
-import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class RegistrarExecucaoDto {
   @IsString()
@@ -7,4 +13,9 @@ export class RegistrarExecucaoDto {
 
   @IsDateString()
   dataExecucao: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  materiaisUtilizados?: string;
 }
