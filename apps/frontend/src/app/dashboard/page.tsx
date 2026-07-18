@@ -169,6 +169,29 @@ export default function DashboardPage() {
               </section>
             </div>
 
+            {dados.porExecutor.length > 0 && (
+              <section className="border border-[#1e2838] bg-[#161c26] rounded-xl p-5">
+                <h2 className="text-sm font-semibold text-white mb-1">
+                  Carga por executor
+                </h2>
+                <p className="text-[11px] text-[#546278] mb-4">
+                  OS ativas (não concluídas/canceladas) designadas a cada
+                  executor
+                </p>
+                <div className="space-y-3 max-w-2xl">
+                  {dados.porExecutor.map((e) => (
+                    <BarStat
+                      key={e.id ?? "sem-executor"}
+                      label={e.nome}
+                      count={e.total}
+                      total={dados.osAbertas}
+                      cor={e.id === null ? "#8a1a1a" : "#1a5f8a"}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section className="border border-[#1e2838] bg-[#161c26] rounded-xl overflow-hidden">
               <div className="px-5 py-4 border-b border-[#1e2838] flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-white">

@@ -114,6 +114,7 @@ export interface EstatisticasOS {
   porStatus: Record<StatusOS, number>;
   porTipo: Record<TipoOS, number>;
   porPrioridade: Record<Prioridade, number>;
+  porExecutor: { id: number | null; nome: string; total: number }[];
   ultimasOs: OrdemServico[];
 }
 
