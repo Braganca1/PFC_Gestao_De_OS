@@ -780,16 +780,33 @@ export default function OrdemDetalhe({ id }: { id: number }) {
                   {new Date(h.dataHora).toLocaleString("pt-BR")} —{" "}
                   <span className="text-[#bcc4d0]">{h.usuario.nome}</span>
                 </div>
-                <div className="text-[#f8fafc]">
-                  <span className="font-semibold">{rotuloCampo(h.campoAlterado)}:</span>{" "}
-                  <span className="text-[#546278] line-through">
-                    {formatarValor(h.campoAlterado, h.valorAnterior)}
-                  </span>{" "}
-                  <span className="text-[#546278]">→</span>{" "}
-                  <span className="text-[#c8d67a]">
-                    {formatarValor(h.campoAlterado, h.valorNovo)}
-                  </span>
-                </div>
+                {h.campoAlterado === "anexo" ? (
+                  <div className="text-[#f8fafc]">
+                    <span className="font-semibold">
+                      {h.valorNovo ? "Anexo adicionado:" : "Anexo removido:"}
+                    </span>{" "}
+                    <span
+                      className={
+                        h.valorNovo
+                          ? "text-[#c8d67a]"
+                          : "text-[#546278] line-through"
+                      }
+                    >
+                      {h.valorNovo ?? h.valorAnterior}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-[#f8fafc]">
+                    <span className="font-semibold">{rotuloCampo(h.campoAlterado)}:</span>{" "}
+                    <span className="text-[#546278] line-through">
+                      {formatarValor(h.campoAlterado, h.valorAnterior)}
+                    </span>{" "}
+                    <span className="text-[#546278]">→</span>{" "}
+                    <span className="text-[#c8d67a]">
+                      {formatarValor(h.campoAlterado, h.valorNovo)}
+                    </span>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

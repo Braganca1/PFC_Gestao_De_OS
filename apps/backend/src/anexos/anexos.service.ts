@@ -57,15 +57,26 @@ export class AnexosService {
       }
     }
 
-    return this.prisma.anexo.create({
-      data: {
-        osId,
-        nomeArquivo,
-        tipoMime,
-        conteudo,
-        tamanho: conteudo.length,
-      },
-      select: metadados,
+    return this.prisma.$transaction(async (tx) => {
+      const anexo = await tx.anexo.create({
+        data: {
+          osId,
+          nomeArquivo,
+          tipoMime,
+          conteudo,
+          tamanho: conteudo.length,
+        },
+        select: metadados,
+      });
+      await tx.historicoOs.create({
+        data: {
+          osId,
+          usuarioId: user.sub,
+          campoAlterado: 'anexo',
+          valorNovo: nomeArquivo,
+        },
+      });
+      return anexo;
     });
   }
 
@@ -77,9 +88,19 @@ export class AnexosService {
     return this.buscarValidandoDono(id, user, true);
   }
 
-  async remove(id: number, user?: UsuarioAutenticado) {
-    await this.findOne(id, user);
-    await this.prisma.anexo.delete({ where: { id } });
+  async remove(id: number, user: UsuarioAutenticado) {
+    const anexo = await this.findOne(id, user);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.anexo.delete({ where: { id } });
+      await tx.historicoOs.create({
+        data: {
+          osId: anexo.osId,
+          usuarioId: user.sub,
+          campoAlterado: 'anexo',
+          valorAnterior: anexo.nomeArquivo,
+        },
+      });
+    });
   }
 
   private async buscarValidandoDono(
