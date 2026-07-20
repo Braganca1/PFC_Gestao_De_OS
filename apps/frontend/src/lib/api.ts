@@ -149,6 +149,16 @@ export const api = {
     });
   },
 
+  informarPrevisao(
+    id: number,
+    payload: { previsaoConclusao: string },
+  ): Promise<OrdemServico> {
+    return request<OrdemServico>(`/ordens-servico/${id}/previsao`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
+
   cancelarOrdem(id: number): Promise<OrdemServico> {
     return request<OrdemServico>(`/ordens-servico/${id}/cancelar`, {
       method: "PATCH",

@@ -60,6 +60,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   const [obsFinais, setObsFinais] = useState("");
   const [atividadesExec, setAtividadesExec] = useState("");
   const [dataExec, setDataExec] = useState("");
+  const [previsaoInput, setPrevisaoInput] = useState("");
   const [materiaisExec, setMateriaisExec] = useState<LinhaMaterial[]>([
     LINHA_MATERIAL_VAZIA,
   ]);
@@ -93,6 +94,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     setNovaPrioridade(o.prioridade);
     setNovoExecutor(o.executorId ? String(o.executorId) : "");
     setObservacao(o.observacao ?? "");
+    setPrevisaoInput(o.previsaoConclusao?.slice(0, 10) ?? "");
   }
 
   useEffect(() => {
@@ -194,6 +196,29 @@ export default function OrdemDetalhe({ id }: { id: number }) {
       setHistorico(novoHist);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao registrar execução");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function salvarPrevisao(e: React.FormEvent) {
+    e.preventDefault();
+    if (!os || !previsaoInput) return;
+    if (previsaoInput === os.previsaoConclusao?.slice(0, 10)) return;
+    setSalvando(true);
+    setErro(null);
+    try {
+      const atualizada = await api.informarPrevisao(os.id, {
+        previsaoConclusao: previsaoInput,
+      });
+      setOs(atualizada);
+      preencherFormulario(atualizada);
+      const novoHist = await api
+        .listarHistorico(os.id)
+        .catch(() => [] as HistoricoOs[]);
+      setHistorico(novoHist);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao salvar previsão");
     } finally {
       setSalvando(false);
     }
@@ -310,6 +335,22 @@ export default function OrdemDetalhe({ id }: { id: number }) {
                 : "—"
             }
           />
+          {os.previsaoConclusao && (
+            <div className="text-sm">
+              <div className="text-[11px] uppercase tracking-wide text-[#546278]">
+                Previsão de conclusão
+              </div>
+              <div className="mt-1 text-[#f8fafc]">
+                {new Date(os.previsaoConclusao).toLocaleDateString("pt-BR")}
+                {!concluida &&
+                  new Date(os.previsaoConclusao) < new Date() && (
+                    <span className="ml-2 text-red-400 text-xs font-semibold">
+                      (atrasada)
+                    </span>
+                  )}
+              </div>
+            </div>
+          )}
           <Info
             label="Descrição"
             value={os.descricao}
@@ -555,6 +596,30 @@ export default function OrdemDetalhe({ id }: { id: number }) {
       )}
 
       {podeRegistrarExecucao && (
+        <Section title="Previsão de conclusão">
+          <form onSubmit={salvarPrevisao} className="flex flex-wrap items-end gap-3">
+            <Field label="Data prevista">
+              <input
+                type="date"
+                required
+                min={new Date().toISOString().slice(0, 10)}
+                className={inputCls}
+                value={previsaoInput}
+                onChange={(e) => setPrevisaoInput(e.target.value)}
+              />
+            </Field>
+            <button
+              type="submit"
+              disabled={salvando}
+              className="bg-[#7a8c3a] hover:bg-[#8fa042] text-[#0f1319] font-semibold px-5 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            >
+              Salvar previsão
+            </button>
+          </form>
+        </Section>
+      )}
+
+      {podeRegistrarExecucao && (
         <Section title="Registrar execução">
           <form onSubmit={registrarExecucao} className="grid sm:grid-cols-2 gap-3">
             <Field label="Data da execução">
@@ -772,6 +837,7 @@ const ROTULO_CAMPO: Record<string, string> = {
   atividadesExecutadas: "Atividades executadas",
   dataExecucao: "Data da execução",
   materiaisUtilizados: "Materiais utilizados",
+  previsaoConclusao: "Previsão de conclusão",
 };
 
 function rotuloCampo(campo: string): string {

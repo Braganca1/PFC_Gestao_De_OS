@@ -74,6 +74,7 @@ export interface OrdemServico {
   atividadesExecutadas: string | null;
   dataExecucao: string | null;
   materiaisUtilizados: string | null;
+  previsaoConclusao: string | null;
   osConstrucaoCivil: { id: number } | null;
   osEletrico: { id: number } | null;
   osInstalacaoArCondicionado: ({ id: number } & DadosInstalacaoAr) | null;
