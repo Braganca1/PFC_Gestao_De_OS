@@ -22,6 +22,7 @@ import { CreateOrdemServicoDto } from './dto/create-ordem-servico.dto';
 import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
 import { EncerrarOrdemServicoDto } from './dto/encerrar-ordem-servico.dto';
 import { RegistrarExecucaoDto } from './dto/registrar-execucao.dto';
+import { InformarPrevisaoDto } from './dto/informar-previsao.dto';
 
 @Controller('ordens-servico')
 export class OrdensServicoController {
@@ -80,6 +81,15 @@ export class OrdensServicoController {
     @CurrentUser() user: UsuarioAutenticado,
   ) {
     return this.ordensService.registrarExecucao(id, dto, user);
+  }
+
+  @Patch(':id/previsao')
+  informarPrevisao(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: InformarPrevisaoDto,
+    @CurrentUser() user: UsuarioAutenticado,
+  ) {
+    return this.ordensService.informarPrevisao(id, dto, user);
   }
 
   @Patch(':id')

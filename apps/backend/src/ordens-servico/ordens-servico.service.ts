@@ -14,6 +14,7 @@ import { CreateOrdemServicoDto } from './dto/create-ordem-servico.dto';
 import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
 import { EncerrarOrdemServicoDto } from './dto/encerrar-ordem-servico.dto';
 import { RegistrarExecucaoDto } from './dto/registrar-execucao.dto';
+import { InformarPrevisaoDto } from './dto/informar-previsao.dto';
 
 export interface FindAllFiltros {
   numeroOs?: string;
@@ -97,7 +98,8 @@ type CampoMonitorado =
   | 'observacoesFinais'
   | 'atividadesExecutadas'
   | 'dataExecucao'
-  | 'materiaisUtilizados';
+  | 'materiaisUtilizados'
+  | 'previsaoConclusao';
 
 @Injectable()
 export class OrdensServicoService {
@@ -416,6 +418,56 @@ export class OrdensServicoService {
           titulo: `Execução registrada na OS ${depois.numeroOs} por ${user.nome}`,
         },
       );
+      return depois;
+    });
+  }
+
+  async informarPrevisao(
+    id: number,
+    dto: InformarPrevisaoDto,
+    user: UsuarioAutenticado,
+  ) {
+    const antes = await this.findOne(id, user);
+
+    // cliente não informa previsão; executor só nas OS atribuídas a ele
+    if (
+      user.tipo === TipoUsuario.CLIENTE ||
+      (user.tipo === TipoUsuario.EXECUTOR && antes.executorId !== user.sub)
+    ) {
+      throw new NotFoundException(`Ordem de serviço ${id} não encontrada`);
+    }
+    this.validarNaoTerminal(antes.status);
+
+    const previsao = new Date(dto.previsaoConclusao);
+    const inicioDeHoje = new Date();
+    inicioDeHoje.setHours(0, 0, 0, 0);
+    if (previsao < inicioDeHoje) {
+      throw new BadRequestException(
+        'Previsão de conclusão não pode ser uma data passada',
+      );
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const depois = await tx.ordemServico.update({
+        where: { id },
+        data: { previsaoConclusao: previsao },
+        include: includeRelations,
+      });
+      await this.registrarHistorico(tx, id, user.sub, antes, depois, [
+        'previsaoConclusao',
+      ]);
+      if (
+        antes.solicitanteId != null &&
+        antes.solicitanteId !== user.sub &&
+        antes.previsaoConclusao?.getTime() !== previsao.getTime()
+      ) {
+        await this.notificacoes.criar(tx, {
+          osId: id,
+          destinatarioId: antes.solicitanteId,
+          tipo: TIPO_NOTIFICACAO.PREVISAO_CONCLUSAO,
+          titulo: `OS ${depois.numeroOs}: previsão de conclusão ${previsao.toLocaleDateString('pt-BR')}`,
+        });
+      }
       return depois;
     });
   }
