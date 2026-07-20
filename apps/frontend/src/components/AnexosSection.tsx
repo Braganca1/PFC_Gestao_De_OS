@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import type { Anexo } from "@/lib/types";
 
@@ -23,7 +23,17 @@ interface Props {
 export function AnexosSection({ osId, anexos, onChange }: Props) {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [imagemAberta, setImagemAberta] = useState<Anexo | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!imagemAberta) return;
+    function fecharComEsc(e: KeyboardEvent) {
+      if (e.key === "Escape") setImagemAberta(null);
+    }
+    document.addEventListener("keydown", fecharComEsc);
+    return () => document.removeEventListener("keydown", fecharComEsc);
+  }, [imagemAberta]);
 
   async function enviar(file: File) {
     setEnviando(true);
@@ -70,12 +80,19 @@ export function AnexosSection({ osId, anexos, onChange }: Props) {
             >
               <div className="w-12 h-12 shrink-0 rounded bg-[#0f1319] border border-[#1e2838] flex items-center justify-center overflow-hidden">
                 {ehImagem(a.tipoMime) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={api.urlAnexo(a.id)}
-                    alt={a.nomeArquivo}
-                    className="w-full h-full object-cover"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setImagemAberta(a)}
+                    className="w-full h-full cursor-zoom-in"
+                    title="Ampliar imagem"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={api.urlAnexo(a.id)}
+                      alt={a.nomeArquivo}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
                 ) : (
                   <span className="text-[10px] font-bold text-[#7a8c3a]">
                     PDF
@@ -133,6 +150,36 @@ export function AnexosSection({ osId, anexos, onChange }: Props) {
         máximo: 10 MB. Fotos HEIC (iPhone) são convertidas para JPG
         automaticamente.
       </p>
+
+      {imagemAberta && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setImagemAberta(null)}
+          role="dialog"
+          aria-label={imagemAberta.nomeArquivo}
+        >
+          <button
+            type="button"
+            onClick={() => setImagemAberta(null)}
+            className="absolute top-4 right-5 text-white/70 hover:text-white text-3xl leading-none"
+            aria-label="Fechar"
+          >
+            ×
+          </button>
+          <figure className="max-w-[92vw] max-h-[90vh] flex flex-col items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={api.urlAnexo(imagemAberta.id)}
+              alt={imagemAberta.nomeArquivo}
+              className="max-w-full max-h-[82vh] object-contain rounded shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <figcaption className="text-xs text-[#bcc4d0]">
+              {imagemAberta.nomeArquivo}
+            </figcaption>
+          </figure>
+        </div>
+      )}
     </section>
   );
 }
