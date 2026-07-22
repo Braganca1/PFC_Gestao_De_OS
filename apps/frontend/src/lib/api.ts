@@ -159,6 +159,16 @@ export const api = {
     });
   },
 
+  registrarAceite(
+    id: number,
+    payload: { resolvido: boolean; observacao?: string },
+  ): Promise<OrdemServico> {
+    return request<OrdemServico>(`/ordens-servico/${id}/aceite`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
+
   cancelarOrdem(id: number): Promise<OrdemServico> {
     return request<OrdemServico>(`/ordens-servico/${id}/cancelar`, {
       method: "PATCH",

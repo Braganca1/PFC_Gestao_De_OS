@@ -64,6 +64,7 @@ export default function OrdemDetalhe({ id }: { id: number }) {
   const [materiaisExec, setMateriaisExec] = useState<LinhaMaterial[]>([
     LINHA_MATERIAL_VAZIA,
   ]);
+  const [aceiteObs, setAceiteObs] = useState("");
   const [salvando, setSalvando] = useState(false);
 
   async function carregar() {
@@ -224,6 +225,32 @@ export default function OrdemDetalhe({ id }: { id: number }) {
     }
   }
 
+  async function registrarAceite(resolvido: boolean) {
+    if (!os) return;
+    if (!resolvido && !aceiteObs.trim()) {
+      setErro("Descreva a pendência encontrada");
+      return;
+    }
+    setSalvando(true);
+    setErro(null);
+    try {
+      const atualizada = await api.registrarAceite(os.id, {
+        resolvido,
+        observacao: aceiteObs.trim() || undefined,
+      });
+      setOs(atualizada);
+      setAceiteObs("");
+      const novoHist = await api
+        .listarHistorico(os.id)
+        .catch(() => [] as HistoricoOs[]);
+      setHistorico(novoHist);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao registrar aceite");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   async function cancelarSolicitacao() {
     if (!os) return;
     if (!confirm(`Cancelar a solicitação ${os.numeroOs}?`)) return;
@@ -309,6 +336,71 @@ export default function OrdemDetalhe({ id }: { id: number }) {
           <PrioridadeBadge prioridade={os.prioridade} />
         </div>
       </div>
+
+      <section className="border border-[#1e2838] bg-[#161c26] rounded-xl p-5">
+        <h2 className="text-sm font-semibold text-white mb-4">Andamento</h2>
+        <div className="grid sm:grid-cols-3 gap-4">
+          <Etapa
+            estado={os.atividadesExecutadas ? "ok" : "aguardando"}
+            titulo="Execução registrada"
+            detalhe={
+              os.atividadesExecutadas
+                ? [
+                    os.executor ? `por ${os.executor.nome}` : null,
+                    os.dataExecucao
+                      ? new Date(os.dataExecucao).toLocaleDateString("pt-BR")
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" — ")
+                : "aguardando execução"
+            }
+          />
+          <Etapa
+            estado={
+              os.aceiteCliente === true
+                ? "ok"
+                : os.aceiteCliente === false
+                  ? "alerta"
+                  : "aguardando"
+            }
+            titulo="Aceite do solicitante"
+            detalhe={
+              os.aceiteCliente === null
+                ? "aguardando manifestação"
+                : `${os.aceiteCliente ? "Confirmado" : "Pendência reportada"}${
+                    os.aceiteClienteEm
+                      ? " — " +
+                        new Date(os.aceiteClienteEm).toLocaleDateString("pt-BR")
+                      : ""
+                  }`
+            }
+            obs={os.aceiteCliente === false ? os.aceiteClienteObs : null}
+          />
+          <Etapa
+            estado={
+              os.encerradoEm
+                ? "ok"
+                : os.status === "CANCELADA"
+                  ? "erro"
+                  : "aguardando"
+            }
+            titulo="Encerramento"
+            detalhe={
+              os.encerradoEm
+                ? [
+                    os.encerradoPor ? `por ${os.encerradoPor}` : null,
+                    new Date(os.encerradoEm).toLocaleDateString("pt-BR"),
+                  ]
+                    .filter(Boolean)
+                    .join(" — ")
+                : os.status === "CANCELADA"
+                  ? "OS cancelada"
+                  : "aguardando encerramento"
+            }
+          />
+        </div>
+      </section>
 
       {erro && (
         <div className="bg-red-500/10 text-red-300 border border-red-500/20 px-4 py-3 rounded text-sm">
@@ -499,6 +591,40 @@ export default function OrdemDetalhe({ id }: { id: number }) {
               </div>
             )}
           </Grid>
+        </Section>
+      )}
+
+      {ehDono && !concluida && os.atividadesExecutadas && (
+        <Section title="Confirmação do solicitante">
+          <p className="text-[11px] text-[#546278]">
+            O serviço foi executado. Confirme se o problema foi resolvido ou
+            reporte uma pendência para a equipe.
+          </p>
+          <textarea
+            className={inputCls}
+            rows={2}
+            placeholder="Observação (obrigatória ao reportar pendência)"
+            value={aceiteObs}
+            onChange={(e) => setAceiteObs(e.target.value)}
+          />
+          <div className="flex gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => registrarAceite(true)}
+              disabled={salvando}
+              className="bg-[#7a8c3a] hover:bg-[#8fa042] text-[#0f1319] font-semibold px-5 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            >
+              Confirmar resolução
+            </button>
+            <button
+              type="button"
+              onClick={() => registrarAceite(false)}
+              disabled={salvando}
+              className="border border-[#c88a00] text-[#c88a00] hover:bg-[#c88a00]/10 font-semibold px-5 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            >
+              Reportar pendência
+            </button>
+          </div>
         </Section>
       )}
 
@@ -855,6 +981,8 @@ const ROTULO_CAMPO: Record<string, string> = {
   dataExecucao: "Data da execução",
   materiaisUtilizados: "Materiais utilizados",
   previsaoConclusao: "Previsão de conclusão",
+  aceiteCliente: "Aceite do solicitante",
+  aceiteClienteObs: "Observação do aceite",
 };
 
 function rotuloCampo(campo: string): string {
@@ -866,7 +994,52 @@ function formatarValor(campo: string, valor: string | null): string {
   if (campo === "status") return STATUS_LABEL[valor as StatusOS] ?? valor;
   if (campo === "prioridade")
     return PRIORIDADE_LABEL[valor as Prioridade] ?? valor;
+  if (campo === "aceiteCliente")
+    return valor === "true" ? "Confirmado" : "Pendência";
   return valor;
+}
+
+const ETAPA_ESTILO = {
+  ok: { icone: "✓", cor: "text-[#c8d67a]", borda: "border-[#7a8c3a]/50" },
+  alerta: { icone: "⚠", cor: "text-[#e0a93f]", borda: "border-[#c88a00]/50" },
+  erro: { icone: "✗", cor: "text-red-400", borda: "border-red-500/40" },
+  aguardando: { icone: "○", cor: "text-[#546278]", borda: "border-[#1e2838]" },
+} as const;
+
+function Etapa({
+  estado,
+  titulo,
+  detalhe,
+  obs,
+}: {
+  estado: keyof typeof ETAPA_ESTILO;
+  titulo: string;
+  detalhe: string;
+  obs?: string | null;
+}) {
+  const estilo = ETAPA_ESTILO[estado];
+  return (
+    <div className={`border ${estilo.borda} bg-[#0f1319] rounded-lg px-4 py-3`}>
+      <div className="flex items-center gap-2">
+        <span className={`${estilo.cor} text-base leading-none`}>
+          {estilo.icone}
+        </span>
+        <span className="text-[13px] font-semibold text-white">{titulo}</span>
+      </div>
+      <div
+        className={`mt-1 text-[11px] ${
+          estado === "aguardando" ? "text-[#546278]" : estilo.cor
+        }`}
+      >
+        {detalhe}
+      </div>
+      {obs && (
+        <div className="mt-1 text-[11px] text-[#bcc4d0] italic">
+          &ldquo;{obs}&rdquo;
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Section({
