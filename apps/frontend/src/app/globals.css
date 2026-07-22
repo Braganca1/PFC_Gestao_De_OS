@@ -17,3 +17,12 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Helvetica, Arial, sans-serif;
 }
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.75);
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(1);
+}
