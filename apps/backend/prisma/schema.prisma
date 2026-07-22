@@ -98,6 +98,10 @@ model OrdemServico {
   atividadesExecutadas String?   @map("atividades_executadas")
   dataExecucao         DateTime? @map("data_execucao")
   previsaoConclusao    DateTime? @map("previsao_conclusao")
+
+  aceiteCliente    Boolean?  @map("aceite_cliente")
+  aceiteClienteObs String?   @map("aceite_cliente_obs")
+  aceiteClienteEm  DateTime? @map("aceite_cliente_em")
   materiaisUtilizados  String?   @map("materiais_utilizados")
 
   solicitantes               Usuario[]                   @relation("Solicitantes")

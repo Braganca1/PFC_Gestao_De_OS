@@ -15,6 +15,7 @@ import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
 import { EncerrarOrdemServicoDto } from './dto/encerrar-ordem-servico.dto';
 import { RegistrarExecucaoDto } from './dto/registrar-execucao.dto';
 import { InformarPrevisaoDto } from './dto/informar-previsao.dto';
+import { RegistrarAceiteDto } from './dto/registrar-aceite.dto';
 
 export interface FindAllFiltros {
   numeroOs?: string;
@@ -99,7 +100,9 @@ type CampoMonitorado =
   | 'atividadesExecutadas'
   | 'dataExecucao'
   | 'materiaisUtilizados'
-  | 'previsaoConclusao';
+  | 'previsaoConclusao'
+  | 'aceiteCliente'
+  | 'aceiteClienteObs';
 
 @Injectable()
 export class OrdensServicoService {
@@ -468,6 +471,64 @@ export class OrdensServicoService {
           titulo: `OS ${depois.numeroOs}: previsão de conclusão ${previsao.toLocaleDateString('pt-BR')}`,
         });
       }
+      return depois;
+    });
+  }
+
+  async registrarAceite(
+    id: number,
+    dto: RegistrarAceiteDto,
+    user: UsuarioAutenticado,
+  ) {
+    const antes = await this.findOne(id, user);
+
+    // somente o dono da OS (solicitante) pode se manifestar
+    if (!osPertenceAoUsuario(antes, user)) {
+      throw new NotFoundException(`Ordem de serviço ${id} não encontrada`);
+    }
+    this.validarNaoTerminal(antes.status);
+
+    if (antes.atividadesExecutadas == null) {
+      throw new BadRequestException(
+        'Aguarde o registro de execução para confirmar a resolução',
+      );
+    }
+    if (!dto.resolvido && !dto.observacao?.trim()) {
+      throw new BadRequestException('Descreva a pendência encontrada');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const depois = await tx.ordemServico.update({
+        where: { id },
+        data: {
+          aceiteCliente: dto.resolvido,
+          aceiteClienteObs: dto.observacao?.trim() || null,
+          aceiteClienteEm: new Date(),
+        },
+        include: includeRelations,
+      });
+      await this.registrarHistorico(tx, id, user.sub, antes, depois, [
+        'aceiteCliente',
+        'aceiteClienteObs',
+      ]);
+
+      const destinatarios = await this.idsGestores(tx, user.sub);
+      if (
+        !dto.resolvido &&
+        antes.executorId != null &&
+        antes.executorId !== user.sub &&
+        !destinatarios.includes(antes.executorId)
+      ) {
+        destinatarios.push(antes.executorId);
+      }
+      await this.notificacoes.criarVarias(tx, destinatarios, {
+        osId: id,
+        tipo: TIPO_NOTIFICACAO.ACEITE_CLIENTE,
+        titulo: dto.resolvido
+          ? `Solicitante confirmou a resolução da OS ${depois.numeroOs}`
+          : `Solicitante reportou pendência na OS ${depois.numeroOs}`,
+      });
+
       return depois;
     });
   }

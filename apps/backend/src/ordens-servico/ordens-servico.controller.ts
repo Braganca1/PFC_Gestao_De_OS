@@ -23,6 +23,7 @@ import { UpdateOrdemServicoDto } from './dto/update-ordem-servico.dto';
 import { EncerrarOrdemServicoDto } from './dto/encerrar-ordem-servico.dto';
 import { RegistrarExecucaoDto } from './dto/registrar-execucao.dto';
 import { InformarPrevisaoDto } from './dto/informar-previsao.dto';
+import { RegistrarAceiteDto } from './dto/registrar-aceite.dto';
 
 @Controller('ordens-servico')
 export class OrdensServicoController {
@@ -90,6 +91,15 @@ export class OrdensServicoController {
     @CurrentUser() user: UsuarioAutenticado,
   ) {
     return this.ordensService.informarPrevisao(id, dto, user);
+  }
+
+  @Patch(':id/aceite')
+  registrarAceite(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RegistrarAceiteDto,
+    @CurrentUser() user: UsuarioAutenticado,
+  ) {
+    return this.ordensService.registrarAceite(id, dto, user);
   }
 
   @Patch(':id')
