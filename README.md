@@ -43,14 +43,20 @@ cd apps/backend
 npx prisma migrate deploy
 ```
 
-## Rodando
+## Rodando (banco + backend + frontend)
 
-Em terminais separados a partir da raiz do projeto:
+Um único comando sobe os três serviços. As migrations são aplicadas
+automaticamente na subida do backend.
 
 ```bash
-npm run dev:backend   # porta 3001
-npm run dev:frontend  # porta 3000
+docker compose up          
 ```
+
+- O código é montado nos containers (bind mount), então **hot-reload funciona**:
+  editar um arquivo em `apps/` recompila dentro do container.
+- Para reconstruir as imagens após mudar dependências: `docker compose build`.
+- Para parar: `docker compose down` (adicione `-v` para apagar também o volume do banco).
+
 
 ## URLs
 

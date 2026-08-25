@@ -1,0 +1,16 @@
+# dependências e artefatos de build (reinstalados/reconstruídos dentro da imagem)
+**/node_modules
+**/dist
+**/.next
+
+# versionamento e docs (não entram na imagem)
+.git
+.gitignore
+docs
+
+# segredos (injetados via environment do compose, nunca copiados para a imagem)
+.env
+**/.env.local
+
+# anexos locais de desenvolvimento (produção usa o banco)
+apps/backend/uploads
