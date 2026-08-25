@@ -11,7 +11,56 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+      target: dev
+    container_name: pfc_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # dentro da rede Docker o banco é acessível pelo nome do serviço "postgres" na porta interna 5432
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      PORT: 3001
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      # hot-reload confiável em bind mount (Windows/macOS)
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    # WORKDIR do container é /app/apps/backend: aplica migrations (schema em ./prisma) e sobe em watch
+    command: sh -c "npx prisma migrate deploy && npm run start:dev"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      target: dev
+    container_name: pfc_frontend
+    depends_on:
+      - backend
+    environment:
+      # o navegador roda no host, então acessa a API pela porta publicada do backend
+      NEXT_PUBLIC_API_BASE: http://localhost:3001/api
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/frontend/.next
+    # usa o CMD do Dockerfile (npm run dev a partir de /app/apps/frontend)
 
 volumes:
   postgres_data:
