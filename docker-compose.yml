@@ -34,6 +34,9 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       # hot-reload confiável em bind mount (Windows/macOS)
       CHOKIDAR_USEPOLLING: "true"
+      # o watch do compilador TypeScript (nest start --watch) precisa de polling
+      # para enxergar mudanças através do bind mount no Windows
+      TSC_WATCHFILE: DynamicPriorityPolling
     ports:
       - "3001:3001"
     volumes:
