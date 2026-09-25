@@ -22,6 +22,8 @@ export interface FindAllFiltros {
   solicitante?: string;
   status?: StatusOS;
   tipo?: TipoOS;
+  inicio?: Date;
+  fim?: Date;
 }
 
 const includeRelations = {
@@ -203,6 +205,12 @@ export class OrdensServicoService {
     }
     if (filtros.status) where.status = filtros.status;
     if (filtros.tipo) where.tipo = filtros.tipo;
+    if (filtros.inicio || filtros.fim) {
+      where.dataHora = {
+        ...(filtros.inicio ? { gte: filtros.inicio } : {}),
+        ...(filtros.fim ? { lte: filtros.fim } : {}),
+      };
+    }
 
     return this.prisma.ordemServico.findMany({
       where,

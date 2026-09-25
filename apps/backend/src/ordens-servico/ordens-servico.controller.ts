@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -44,11 +45,30 @@ export class OrdensServicoController {
     @Query('solicitante') solicitante?: string,
     @Query('status') status?: StatusOS,
     @Query('tipo') tipo?: TipoOS,
+    @Query('inicio') inicio?: string,
+    @Query('fim') fim?: string,
   ) {
+    const dataInicio = this.parseData(inicio, 'inicio');
+    const dataFim = this.parseData(fim, 'fim');
+    if (dataFim) dataFim.setHours(23, 59, 59, 999);
     return this.ordensService.findAll(
-      { numeroOs, solicitante, status, tipo },
+      { numeroOs, solicitante, status, tipo, inicio: dataInicio, fim: dataFim },
       user,
     );
+  }
+
+  private parseData(
+    valor: string | undefined,
+    campo: string,
+  ): Date | undefined {
+    if (!valor) return undefined;
+    const data = new Date(`${valor}T00:00:00`);
+    if (Number.isNaN(data.getTime())) {
+      throw new BadRequestException(
+        `Data inválida em "${campo}" (use AAAA-MM-DD)`,
+      );
+    }
+    return data;
   }
 
   @Get(':id')
