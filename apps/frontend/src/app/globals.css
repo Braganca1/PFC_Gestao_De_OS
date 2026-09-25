@@ -26,3 +26,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input[type="date"]::-webkit-calendar-picker-indicator:hover {
   filter: invert(1);
 }
+
+/* Impressão (Exportar PDF dos relatórios): esconde a navegação e imprime
+   o conteúdo fiel à tela, expandindo o container que normalmente rola. */
+@media print {
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  body > div,
+  .flex.h-screen {
+    display: block !important;
+    height: auto !important;
+  }
+
+  main {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

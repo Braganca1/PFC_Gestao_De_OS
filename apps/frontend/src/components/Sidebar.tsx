@@ -36,7 +36,8 @@ const NAV_ITEMS: NavItem[] = [
   {
     label: "Relatórios",
     icon: "↧",
-    disabled: true,
+    href: "/relatorios",
+    matchPrefix: "/relatorios",
     papeis: ["GESTOR", "ADMINISTRADOR"],
   },
   {

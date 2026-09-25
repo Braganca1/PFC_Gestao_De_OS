@@ -83,6 +83,8 @@ export interface FiltrosOS {
   solicitante?: string;
   status?: StatusOS | "";
   tipo?: TipoOS | "";
+  inicio?: string;
+  fim?: string;
 }
 
 export const api = {
@@ -110,6 +112,8 @@ export const api = {
     if (filtros.solicitante) qs.set("solicitante", filtros.solicitante);
     if (filtros.status) qs.set("status", filtros.status);
     if (filtros.tipo) qs.set("tipo", filtros.tipo);
+    if (filtros.inicio) qs.set("inicio", filtros.inicio);
+    if (filtros.fim) qs.set("fim", filtros.fim);
     const sufixo = qs.toString() ? `?${qs.toString()}` : "";
     return request<OrdemServico[]>(`/ordens-servico${sufixo}`);
   },
@@ -223,8 +227,15 @@ export const api = {
     return request<void>(`/usuarios/${id}`, { method: "DELETE" });
   },
 
-  obterEstatisticas(): Promise<EstatisticasOS> {
-    return request<EstatisticasOS>(`/estatisticas`);
+  obterEstatisticas(filtro?: {
+    inicio?: string;
+    fim?: string;
+  }): Promise<EstatisticasOS> {
+    const qs = new URLSearchParams();
+    if (filtro?.inicio) qs.set("inicio", filtro.inicio);
+    if (filtro?.fim) qs.set("fim", filtro.fim);
+    const sufixo = qs.toString() ? `?${qs.toString()}` : "";
+    return request<EstatisticasOS>(`/estatisticas${sufixo}`);
   },
 
   listarSecoes(): Promise<Secao[]> {
